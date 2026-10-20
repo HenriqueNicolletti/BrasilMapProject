@@ -2,6 +2,8 @@
 
 Atlas interativo dos 5.570 municípios brasileiros, feito com dados públicos do IBGE. A pergunta central é: **qual município se parece mais com o seu?**
 
+**No ar:** https://brasil-em-mapas.vercel.app
+
 Site 100% estático (Astro), sem servidor, sem banco de dados, sem chave de API e sem custo.
 
 ## O que tem
@@ -72,7 +74,7 @@ docs/          PLAN.md (fases) e DECISIONS.md (toda decisão não óbvia, com n�
 - O `axe-core` roda nas páginas principais, nos temas claro e escuro, em 375 px e 1440 px (`e2e/a11y.spec.ts`).
 - Animações curtas (até 600 ms) com GSAP, só em conteúdo que aparece depois de uma ação, e desligadas com `prefers-reduced-motion: reduce`.
 - Páginas de município e de ranking funcionam sem JavaScript (exceto o mapa).
-- Lighthouse (celular simulado, servido com brotli), nota de desempenho: home 98, município 99, gêmeo 99, Brasil inteiro 99; acessibilidade, boas práticas e SEO em 100. Estados grandes ficam abaixo de 90 (Minas, 85) pelo peso da malha municipal. Medições e limites em D9 e D10.4.
+- Lighthouse no celular, medido no site publicado, nota de desempenho: home 98, município 100, gêmeo 100, Brasil inteiro 99; acessibilidade, boas práticas e SEO em 100. Estados grandes ficam abaixo de 90 (Minas, 81) pelo peso da malha municipal. Medições em D9 e D11.4.
 
 ## Publicar
 

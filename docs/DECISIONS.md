@@ -434,5 +434,20 @@ Limites do plano Hobby (documentação da Vercel, revista em 2026-09-16): um dep
 - `trailingSlash: true`, igual ao `trailingSlash: 'always'` do Astro: `/uf/mg` redireciona para `/uf/mg/`.
 - Cache longo e `immutable` em `/_astro/`, onde todo arquivo tem hash no nome.
 
+### D11.4 Verificação no site publicado (https://brasil-em-mapas.vercel.app)
+Todas as rotas respondem 200; `/uf/mg` redireciona (308) para `/uf/mg/`; HTML servido com brotli; `og:image` com URL absoluta do domínio de produção; nenhuma requisição ao IBGE, nem na página de município nem no mapa nacional, que carrega as 28 malhas do próprio site. A busca (sem acento), o gêmeo por link direto e o mapa nacional funcionam, sem erro nem aviso no console.
+
+Lighthouse 13.5 no celular simulado, direto no site publicado (desempenho / acessibilidade / boas práticas / SEO):
+
+| Página | Notas | LCP | CLS | TBT |
+|---|---|---|---|---|
+| Home | 98 / 100 / 100 / 100 | 2,0 s | 0 | 0 ms |
+| Município (Campinas) | 100 / 100 / 100 / 100 | 1,6 s | 0 | 0 ms |
+| `/gemeo/` | 100 / 100 / 100 / 100 | 1,7 s | 0 | 0 ms |
+| `/brasil/` | 99 / 100 / 100 / 100 | 1,8 s | 0 | 0 ms |
+| `/uf/mg/` | 81 / 100 / 100 / 100 | 3,7 s | 0 | 0 ms |
+
+Os critérios do projeto (home e município, 90+ nas quatro) passam. Minas fica em 81, o custo aceito da malha `intermediaria` (D3.7, atualização).
+
 ### D3.7 (atualização): malha municipal fica em `qualidade=intermediaria`
 Decidido em 2026-10-20, depois de ver Minas Gerais nas duas qualidades lado a lado. A `minima` corta a geometria de MG de 897 KB para 211 KB e quase não muda o desenho no tamanho da página, mas fica angulosa com zoom, o que pesa no mapa de `/brasil/`. Fica a `intermediaria`. Custo aceito: `/uf/mg/` e outros estados grandes ficam abaixo de 90 em desempenho no Lighthouse do celular (85 em MG, D10.4). Isso está fora dos critérios do projeto, que pedem 90+ só na home e na página de município, e as duas passam.
