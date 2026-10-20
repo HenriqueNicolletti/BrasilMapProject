@@ -4,9 +4,7 @@ Atlas interativo dos 5.570 municípios brasileiros com dados públicos do IBGE. 
 
 **Estado: todas as fases (0 a 9) concluídas**, mais a rodada de design da home (D10). As decisões de cada fase estão em `docs/DECISIONS.md` (D0.x a D10.x). A malha municipal fica em `qualidade=intermediaria` (D3.7, atualização).
 
-Pendente para publicar:
-- **Git:** a pasta ainda não é um repositório. Fazer commits pequenos no padrão Conventional Commits e criar o repositório no GitHub.
-- **Deploy na Vercel** (pendente desde a Fase 1; exige a conta do autor): definir `SITE_URL` (sem ela, as tags `og:image` são omitidas, D7.4), conferir os limites do plano Hobby (`dist/` com cerca de 147 MB em cerca de 11.300 arquivos, D4.5) e medir o Lighthouse de novo no site publicado.
+Código no GitHub (público). Deploy na Vercel pela integração com o GitHub, com o endereço público preenchido no build (D11.1 a D11.3). Pendente: medir o Lighthouse de novo no site publicado.
 
 ## 1. Objetivo e restrições
 

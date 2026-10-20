@@ -421,5 +421,18 @@ O que sobra (LCP de 3,8 s) é o custo de baixar 320 KB de dados numa conexão le
 ### D3.5 (atualização)
 Confirmado em 2026-10-20: os municípios no mapa de um estado continuam sem foco individual; a alternativa por teclado é a tabela.
 
+## Deploy na Vercel (2026-10-20)
+
+### D11.1 Build pela integração com o GitHub, não pela linha de comando
+Limites do plano Hobby (documentação da Vercel, revista em 2026-09-16): um deploy pela linha de comando envia no máximo 100 MB e 15.000 arquivos-fonte; um build feito na Vercel não tem limite de arquivos gerados, só 45 minutos de build. O `dist/` tem 150 MB em 11.323 arquivos, então enviar o build pronto (`--prebuilt`) não cabe. A Vercel faz o build a partir do repositório (cerca de 10 MB de fonte), e cada `git push` na `main` publica. Isso resolve o risco de D4.5.
+
+### D11.2 `SITE_URL` automática na Vercel
+`astro.config.mjs` usa `SITE_URL` se existir e, senão, `VERCEL_PROJECT_PRODUCTION_URL`, o domínio de produção que a Vercel expõe no build. Assim as tags `og:image` (D7.4) saem certas já no primeiro deploy, sem configurar nada à mão. `SITE_URL` continua servindo para um domínio próprio ou outra hospedagem.
+
+### D11.3 `vercel.json`
+- `buildCommand: npm run build`, fixado para o Pagefind sempre rodar depois do `astro build`, qualquer que seja o padrão do preset Astro da Vercel. Sem o Pagefind, a busca ficaria sem índice.
+- `trailingSlash: true`, igual ao `trailingSlash: 'always'` do Astro: `/uf/mg` redireciona para `/uf/mg/`.
+- Cache longo e `immutable` em `/_astro/`, onde todo arquivo tem hash no nome.
+
 ### D3.7 (atualização): malha municipal fica em `qualidade=intermediaria`
 Decidido em 2026-10-20, depois de ver Minas Gerais nas duas qualidades lado a lado. A `minima` corta a geometria de MG de 897 KB para 211 KB e quase não muda o desenho no tamanho da página, mas fica angulosa com zoom, o que pesa no mapa de `/brasil/`. Fica a `intermediaria`. Custo aceito: `/uf/mg/` e outros estados grandes ficam abaixo de 90 em desempenho no Lighthouse do celular (85 em MG, D10.4). Isso está fora dos critérios do projeto, que pedem 90+ só na home e na página de município, e as duas passam.

@@ -76,10 +76,10 @@ docs/          PLAN.md (fases) e DECISIONS.md (toda decisão não óbvia, com n�
 
 ## Publicar
 
-Qualquer hospedagem de arquivos estáticos serve (por exemplo, Vercel Hobby). Antes do primeiro deploy:
+O site está na Vercel (plano Hobby), ligada a este repositório: cada `git push` na `main` faz o build e publica. O `vercel.json` fixa o comando de build (com o Pagefind), as barras no fim das URLs e o cache dos arquivos com hash.
 
-- Defina `SITE_URL` (o endereço público, como `https://exemplo.vercel.app`). Sem ela, as tags `og:image` e `twitter:card` não são geradas, porque redes sociais exigem URL absoluta.
-- O `dist/` tem cerca de 150 MB em cerca de 11.300 arquivos; confira os limites da hospedagem (D4.5).
+- **Endereço público:** as tags `og:image` e `twitter:card` exigem URL absoluta. Na Vercel, o build usa sozinho o domínio de produção. Para um domínio próprio ou outra hospedagem, defina `SITE_URL` (como `https://exemplo.com.br`). Sem endereço, as tags não são geradas.
+- **Tamanho:** o `dist/` tem cerca de 150 MB em cerca de 11.300 arquivos. Na Vercel isso cabe quando o build é feito lá, não quando o build pronto é enviado pela linha de comando (D11.1).
 
 ## Créditos e licença
 
