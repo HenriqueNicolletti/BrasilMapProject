@@ -2,9 +2,64 @@
 
 Atlas interativo dos 5.570 municípios brasileiros, feito com dados públicos do IBGE. A pergunta central é: **qual município se parece mais com o seu?**
 
-**No ar:** https://brasil-em-mapas.vercel.app
+**[Abrir o site → brasilemmapas.vercel.app](https://brasilemmapas.vercel.app)**
 
-Site 100% estático (Astro), sem servidor, sem banco de dados, sem chave de API e sem custo.
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/home-dark.png">
+  <img alt="Home do Brasil em Mapas: mapa do Brasil por estado colorido pela população, com a busca de cidade, a entrada para o município gêmeo e a legenda." src="docs/images/home-light.png">
+</picture>
+
+Site 100% estático (Astro), sem servidor, sem banco de dados, sem chave de API e sem custo. As imagens seguem o tema do seu GitHub: o site tem tema claro ("carta de dia") e escuro ("carta de noite").
+
+## O município gêmeo
+
+Escolha uma cidade e o atlas mostra as mais parecidas com ela em 14 indicadores do IBGE, em quatro eixos que você liga e desliga: demografia, território, economia e infraestrutura. Cada gêmeo vem com o porquê: os indicadores em que os dois mais se parecem e o que mais os separa.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/gemeo-dark.png">
+  <img alt="Página do município gêmeo com Gramado (RS) escolhido: os quatro eixos ligados e os gêmeos São Roque (SP), Frederico Westphalen (RS) e Araranguá (SC), cada um com a distância e os indicadores mais parecidos." src="docs/images/gemeo-light.png">
+</picture>
+
+## Telas
+
+**Estado**: o mapa de cada município do estado, com legenda e a mesma informação em tabela.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/estado-dark.png">
+  <img alt="Mapa de Minas Gerais com os 853 municípios coloridos pela população, com seletor de indicador e legenda em sete faixas." src="docs/images/estado-light.png">
+</picture>
+
+**Brasil inteiro**: os 5.570 municípios num só mapa em canvas, com zoom e busca, carregado só quando pedido.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/brasil-dark.png">
+  <img alt="Mapa nacional com todos os municípios coloridos pela população, com botões de zoom, busca de município e legenda." src="docs/images/brasil-light.png">
+</picture>
+
+<table>
+  <tr>
+    <td width="34%" valign="top">
+      <strong>Município</strong>: cada indicador com valor, fonte, ano e posição no Brasil e no estado. Funciona sem JavaScript.
+      <br><br>
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="docs/images/municipio-dark.png">
+        <img alt="Página de Campinas (SP) no celular: contorno de São Paulo com a cidade marcada e o primeiro indicador, população residente, com valor e posições." src="docs/images/municipio-light.png">
+      </picture>
+    </td>
+    <td width="66%" valign="top">
+      <strong>Comparar</strong>: duas cidades lado a lado, indicador por indicador, com a distância entre elas.
+      <br><br>
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="docs/images/comparar-dark.png">
+        <img alt="Comparação entre Campinas (SP) e Ribeirão Preto (SP), com distância de 0,21 e as tabelas de demografia e território lado a lado." src="docs/images/comparar-light.png">
+      </picture>
+    </td>
+  </tr>
+</table>
+
+## Feito com
+
+Astro (saída estática) e TypeScript estrito; D3 (projeção e escalas) e TopoJSON nos mapas; Pagefind na busca; Satori nas imagens de compartilhamento; GSAP em animações curtas; Zod para validar cada resposta do IBGE. Testes com Vitest, Playwright e axe-core. Publicado na Vercel.
 
 ## O que tem
 
