@@ -1,0 +1,137 @@
+{
+  "hash": "5f8a9158e39b4afd",
+  "linhas": 5571,
+  "colunas": 13,
+  "indicadores": [
+    {
+      "id": "pop",
+      "rotulo": "População residente",
+      "unidade": "pessoas",
+      "eixo": "demografia",
+      "ano": "2022",
+      "fonte": "Censo 2022, tabela 4714, variável 93",
+      "transform": "log",
+      "cobertura": 5570
+    },
+    {
+      "id": "dens",
+      "rotulo": "Densidade demográfica",
+      "unidade": "hab/km²",
+      "eixo": "demografia",
+      "ano": "2022",
+      "fonte": "Censo 2022, tabela 4714, variável 614",
+      "transform": "log",
+      "cobertura": 5570
+    },
+    {
+      "id": "idade_mediana",
+      "rotulo": "Idade mediana",
+      "unidade": "anos",
+      "eixo": "demografia",
+      "ano": "2022",
+      "fonte": "Censo 2022, tabela 9515, variável 10613",
+      "transform": "linear",
+      "cobertura": 5570
+    },
+    {
+      "id": "envelhecimento",
+      "rotulo": "Índice de envelhecimento",
+      "unidade": "idosos por 100 jovens",
+      "eixo": "demografia",
+      "ano": "2022",
+      "fonte": "Censo 2022, tabela 9515, variável 10612",
+      "transform": "log",
+      "cobertura": 5570
+    },
+    {
+      "id": "area",
+      "rotulo": "Área territorial",
+      "unidade": "km²",
+      "eixo": "territorio",
+      "ano": "2022",
+      "fonte": "Censo 2022, tabela 4714, variável 6318",
+      "transform": "log",
+      "cobertura": 5570
+    },
+    {
+      "id": "urbana_pct",
+      "rotulo": "População em área urbana",
+      "unidade": "fração",
+      "eixo": "territorio",
+      "ano": "2022",
+      "fonte": "Censo 2022, tabela 9923: urbana ÷ total",
+      "transform": "linear",
+      "cobertura": 5570
+    },
+    {
+      "id": "pib_pc",
+      "rotulo": "PIB per capita",
+      "unidade": "R$",
+      "eixo": "economia",
+      "ano": "2021 (PIB) e 2022 (população)",
+      "fonte": "PIB dos Municípios, tabela 5938, variável 37 (mil R$) × 1000 ÷ população 2022",
+      "transform": "log",
+      "cobertura": 5570
+    },
+    {
+      "id": "va_agro_pct",
+      "rotulo": "Agropecuária no valor adicionado",
+      "unidade": "fração",
+      "eixo": "economia",
+      "ano": "2021",
+      "fonte": "PIB dos Municípios, tabela 5938: variável 513 ÷ 498",
+      "transform": "linear",
+      "cobertura": 5569
+    },
+    {
+      "id": "va_ind_pct",
+      "rotulo": "Indústria no valor adicionado",
+      "unidade": "fração",
+      "eixo": "economia",
+      "ano": "2021",
+      "fonte": "PIB dos Municípios, tabela 5938: variável 517 ÷ 498",
+      "transform": "linear",
+      "cobertura": 5569
+    },
+    {
+      "id": "va_serv_pct",
+      "rotulo": "Serviços no valor adicionado",
+      "unidade": "fração",
+      "eixo": "economia",
+      "ano": "2021",
+      "fonte": "PIB dos Municípios, tabela 5938: variável 6575 ÷ 498 (exclui administração pública)",
+      "transform": "linear",
+      "cobertura": 5569
+    },
+    {
+      "id": "va_adm_pct",
+      "rotulo": "Administração pública no valor adicionado",
+      "unidade": "fração",
+      "eixo": "economia",
+      "ano": "2021",
+      "fonte": "PIB dos Municípios, tabela 5938: variável 525 ÷ 498",
+      "transform": "linear",
+      "cobertura": 5569
+    },
+    {
+      "id": "esgoto_pct",
+      "rotulo": "Domicílios com esgoto em rede",
+      "unidade": "fração",
+      "eixo": "infraestrutura",
+      "ano": "2022",
+      "fonte": "Censo 2022, tabela 6805: rede geral, pluvial ou fossa ligada à rede ÷ total",
+      "transform": "linear",
+      "cobertura": 5570
+    },
+    {
+      "id": "lixo_pct",
+      "rotulo": "Domicílios com lixo coletado",
+      "unidade": "fração",
+      "eixo": "infraestrutura",
+      "ano": "2022",
+      "fonte": "Censo 2022, tabela 6892: coletado ÷ total",
+      "transform": "linear",
+      "cobertura": 5570
+    }
+  ]
+}
