@@ -1,0 +1,30 @@
+---
+import Sheet from '../layouts/Sheet.astro';
+---
+
+<Sheet
+  title="Fora da carta: Brasil em Mapas"
+  description="Este endereço não existe no Brasil em Mapas."
+  back={{ href: '/', label: 'Brasil' }}
+>
+  <main class="atlas-page prose">
+    <h1 class="atlas-title">Fora da carta</h1>
+    <p class="atlas-lede">Este endereço não está no mapa. O link pode estar errado, ou a página mudou de lugar.</p>
+
+    <p>
+      O endereço de um município leva o nome sem acento e a sigla do estado, separados por hífen: Bom Jesus, no Piauí, fica em{' '}
+      <a href="/municipio/bom-jesus-pi/">/municipio/bom-jesus-pi/</a>. A busca do mapa do Brasil acha qualquer um pelo nome.
+    </p>
+
+    <nav class="charts" aria-label="Por onde seguir">
+      <h2>Por onde seguir</h2>
+      <ul>
+        <li><a href="/">Brasil</a> <span>o mapa por estado e a busca de município</span></li>
+        <li><a href="/gemeo/">Município gêmeo</a> <span>as cidades mais parecidas com a sua</span></li>
+        <li><a href="/brasil/">Brasil inteiro</a> <span>os municípios num só mapa, com zoom</span></li>
+        <li><a href="/ranking/">Rankings</a> <span>maiores e menores em cada indicador</span></li>
+        <li><a href="/sobre/">Sobre os dados</a> <span>fontes, anos e o que é “sem dado”</span></li>
+      </ul>
+    </nav>
+  </main>
+</Sheet>

@@ -131,3 +131,13 @@ test('the about page lists the indicators with year and coverage', async ({ page
   await expect(page.getByText(/Sem dado/i).first()).toBeVisible();
   expect(seen.consoleErrors).toEqual([]);
 });
+
+test('an unknown address answers 404 with a page that leads back into the atlas', async ({ page }) => {
+  const response = await page.goto('/municipio/nao-existe-xx/');
+  expect(response?.status()).toBe(404);
+  await expect(page.getByRole('heading', { level: 1, name: 'Fora da carta' })).toBeVisible();
+  const ways = page.getByRole('navigation', { name: 'Por onde seguir' });
+  await expect(ways.getByRole('link')).toHaveCount(5);
+  await page.getByRole('link', { name: '/municipio/bom-jesus-pi/' }).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Bom Jesus' })).toBeVisible();
+});

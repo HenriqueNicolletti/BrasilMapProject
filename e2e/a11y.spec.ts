@@ -12,6 +12,7 @@ const PAGES = [
   '/ranking/pop/',
   '/sobre/',
   '/brasil/',
+  '/municipio/nao-existe-xx/',
 ];
 
 for (const scheme of ['light', 'dark'] as const) {
