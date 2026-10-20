@@ -1,0 +1,1282 @@
+/*
+ * The chart sheet and everything printed on it: neatline, plate, legend, notes, table.
+ * Global on purpose: the client script redraws legend and table, and those nodes carry no scope id.
+ * Colours, type and space come only from tokens.css.
+ */
+
+/* ---- Sheet ---- */
+
+.sheet {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: var(--space-4);
+  min-height: calc(100dvh - var(--gutter) * 2);
+  margin: var(--gutter);
+  padding: var(--space-5) var(--gutter) var(--space-6);
+  border: var(--rule-neat) solid var(--color-line-strong);
+  background-color: var(--color-sea);
+  background-image:
+    linear-gradient(var(--color-line) var(--rule-hair), transparent var(--rule-hair)),
+    linear-gradient(90deg, var(--color-line) var(--rule-hair), transparent var(--rule-hair));
+  background-size: var(--graticule) var(--graticule);
+  background-position: -1px -1px;
+}
+
+/* The second, thinner rule of a chart neatline, inset from the first. */
+.sheet::before {
+  content: '';
+  position: absolute;
+  inset: var(--space-2);
+  border: var(--rule-hair) solid var(--color-line-strong);
+  pointer-events: none;
+}
+
+.sheet-head {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.back {
+  font-family: var(--font-label);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+}
+
+.atlas {
+  position: relative;
+  display: grid;
+  gap: var(--space-5);
+  align-content: start;
+}
+
+@media (min-width: 60rem) {
+  .atlas {
+    grid-template-columns: minmax(0, 1fr) minmax(17rem, 23rem);
+    gap: var(--space-6);
+  }
+}
+
+.atlas-title {
+  max-width: 14ch;
+  font-size: var(--text-display);
+  letter-spacing: var(--tracking-display);
+}
+
+.atlas-lede {
+  margin-top: var(--space-2);
+  font-size: var(--text-lg);
+  font-style: italic;
+  line-height: var(--leading-snug);
+  color: var(--color-text-muted);
+}
+
+.atlas-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: var(--space-4) var(--space-6);
+}
+
+.atlas-main {
+  display: grid;
+  gap: var(--space-4);
+  align-content: start;
+  min-width: 0;
+}
+
+/* ---- Plate (the map) ---- */
+
+.plate {
+  position: relative;
+  margin: 0;
+  min-width: 0;
+}
+
+.plate svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  /* The whole map fits the first screen: the viewport minus the sheet chrome and the title above it. */
+  max-height: max(24rem, calc(100dvh - 15rem));
+  overflow: visible;
+}
+
+.skip {
+  font-family: var(--font-label);
+  font-size: var(--text-sm);
+  letter-spacing: var(--tracking-label);
+}
+
+.shape {
+  fill: var(--color-land);
+  stroke: var(--color-line-strong);
+  stroke-width: 0.9;
+  vector-effect: non-scaling-stroke;
+  stroke-linejoin: round;
+  transition: fill var(--duration-settle) var(--ease-out);
+}
+
+.shape.s0 { fill: var(--scale-seq-1); }
+.shape.s1 { fill: var(--scale-seq-2); }
+.shape.s2 { fill: var(--scale-seq-3); }
+.shape.s3 { fill: var(--scale-seq-4); }
+.shape.s4 { fill: var(--scale-seq-5); }
+.shape.s5 { fill: var(--scale-seq-6); }
+.shape.s6 { fill: var(--scale-seq-7); }
+.shape.s-none { fill: url('#sem-dado'); }
+
+/* A focused state link outlines itself; hover and the matching table row use the highlight overlay below. */
+.plate a:focus-visible .shape {
+  stroke: var(--color-accent);
+  stroke-width: 2.5;
+}
+
+.plate a {
+  outline: none;
+}
+
+/* The one place magenta overprints the plate: whatever is active (hover, focus, or its table row). */
+.shape-highlight {
+  display: none;
+  fill: color-mix(in srgb, var(--color-accent) 18%, transparent);
+  mix-blend-mode: var(--overprint-blend);
+  stroke: var(--color-accent);
+  stroke-width: 2.5;
+  vector-effect: non-scaling-stroke;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
+.shape-highlight.is-on {
+  display: inline;
+}
+
+.shape-sounding {
+  font-family: var(--font-serif);
+  font-size: var(--text-map-sounding);
+  font-style: italic;
+  text-anchor: middle;
+  dominant-baseline: central;
+  fill: var(--color-text);
+  stroke: var(--color-sea);
+  stroke-width: var(--map-halo);
+  paint-order: stroke;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
+.plate.is-clickable .shape {
+  cursor: pointer;
+}
+
+.shape-label {
+  font-family: var(--font-label);
+  font-size: var(--text-map-label);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  text-anchor: middle;
+  dominant-baseline: central;
+  fill: var(--color-text);
+  stroke: var(--color-sea);
+  stroke-width: var(--map-halo);
+  paint-order: stroke;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
+.tip {
+  position: absolute;
+  z-index: 2;
+  max-width: 16rem;
+  padding: var(--space-2) var(--space-3);
+  border: var(--rule-hair) solid var(--color-line-strong);
+  background: var(--color-sea);
+  font-size: var(--text-sm);
+  line-height: var(--leading-snug);
+  box-shadow: var(--shadow-sheet);
+  pointer-events: none;
+}
+
+.tip[hidden] {
+  display: none;
+}
+
+.tip strong {
+  display: block;
+  font-family: var(--font-label);
+  letter-spacing: var(--tracking-label);
+}
+
+.tip .sounding {
+  font-style: italic;
+}
+
+/* ---- Side panel: controls, legend, notes ---- */
+
+.margin {
+  position: relative;
+  display: grid;
+  gap: var(--space-5);
+  align-content: start;
+}
+
+.rose {
+  width: var(--rose-size);
+  justify-self: end;
+}
+
+.field {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.field label {
+  font-family: var(--font-label);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+}
+
+.field select {
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: var(--rule-hair) solid var(--color-line-strong);
+  border-radius: var(--radius);
+  background: var(--color-sea);
+  color: var(--color-text);
+  font-family: var(--font-serif);
+  font-size: var(--text-base);
+  cursor: pointer;
+}
+
+.field[hidden] {
+  display: none;
+}
+
+.notes {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border: var(--rule-hair) solid var(--color-line-strong);
+  background: var(--color-sea);
+  font-size: var(--text-sm);
+}
+
+.notes h2 {
+  font-family: var(--font-label);
+  font-size: var(--text-sm);
+  letter-spacing: var(--tracking-label);
+}
+
+.legend {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--text-sm);
+}
+
+.legend li {
+  display: grid;
+  grid-template-columns: 1.5rem 1fr;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.legend .sounding {
+  font-style: italic;
+}
+
+.swatch {
+  height: 0.9rem;
+  border: var(--rule-hair) solid var(--color-line-strong);
+}
+
+.swatch.s0 { background: var(--scale-seq-1); }
+.swatch.s1 { background: var(--scale-seq-2); }
+.swatch.s2 { background: var(--scale-seq-3); }
+.swatch.s3 { background: var(--scale-seq-4); }
+.swatch.s4 { background: var(--scale-seq-5); }
+.swatch.s5 { background: var(--scale-seq-6); }
+.swatch.s6 { background: var(--scale-seq-7); }
+.swatch.s-none {
+  background:
+    repeating-linear-gradient(45deg, transparent 0 3px, var(--scale-no-data-hatch) 3px 4px),
+    var(--color-land);
+}
+
+.source {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+/* ---- Table: the keyboard and screen-reader alternative to every map ---- */
+
+.table-section {
+  position: relative;
+  display: grid;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+}
+
+.table-wrap {
+  max-height: 32rem;
+  overflow: auto;
+  border: var(--rule-hair) solid var(--color-line-strong);
+  background: var(--color-sea);
+}
+
+.atlas-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+.atlas-table caption {
+  padding: var(--space-2) var(--space-3);
+  text-align: left;
+  font-style: italic;
+  color: var(--color-text-muted);
+}
+
+.atlas-table th,
+.atlas-table td {
+  padding: var(--space-2) var(--space-3);
+  border-top: var(--rule-hair) solid var(--color-line);
+  text-align: left;
+}
+
+.atlas-table thead th {
+  position: sticky;
+  top: 0;
+  background: var(--color-sea);
+  border-top: 0;
+  border-bottom: var(--rule-hair) solid var(--color-line-strong);
+  font-family: var(--font-label);
+  letter-spacing: var(--tracking-label);
+}
+
+.atlas-table th[scope='row'] {
+  font-weight: 400;
+}
+
+.atlas-table .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+.atlas-table tbody tr.is-active {
+  background: var(--color-shoal);
+}
+
+.sort {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
+}
+
+.sort::after,
+.back::before {
+  content: '';
+  display: inline-block;
+  width: 0.7em;
+  height: 0.7em;
+  background: currentColor;
+  mask: var(--glyph) center / contain no-repeat;
+  -webkit-mask: var(--glyph) center / contain no-repeat;
+}
+
+/* One stroke weight for every drawn glyph. */
+.sort::after {
+  --glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M3 4.5 6 1.5l3 3M3 7.5l3 3 3-3' fill='none' stroke='black' stroke-width='1.4'/%3E%3C/svg%3E");
+  margin-left: 0.35em;
+  opacity: 0.55;
+}
+
+th[aria-sort='ascending'] .sort::after {
+  --glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 8 6 4l3.5 4' fill='none' stroke='black' stroke-width='1.4'/%3E%3C/svg%3E");
+  opacity: 1;
+}
+
+th[aria-sort='descending'] .sort::after {
+  --glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4 6 8l3.5-4' fill='none' stroke='black' stroke-width='1.4'/%3E%3C/svg%3E");
+  opacity: 1;
+}
+
+.back::before {
+  --glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M8 2 4 6l4 4' fill='none' stroke='black' stroke-width='1.4'/%3E%3C/svg%3E");
+  margin-right: 0.3em;
+}
+
+@media (max-width: 40rem) {
+  .rose {
+    width: var(--rose-size-small);
+  }
+
+  /* At phone width the abbreviations would print at about 6px; the table carries the names. */
+  .shape-label,
+  .shape-sounding {
+    display: none;
+  }
+}
+
+/* One element for the slot, so the sheet grid keeps its two rows. */
+.atlas-page {
+  display: grid;
+  align-content: start;
+  min-width: 0;
+}
+
+/* ---- Municipality page ---- */
+
+.locator {
+  margin: 0;
+  display: grid;
+  gap: var(--space-2);
+  justify-items: start;
+}
+
+.locator svg {
+  display: block;
+  width: min(100%, 32rem);
+  height: auto;
+  max-height: 24rem;
+}
+
+.locator .outline {
+  fill: var(--color-land);
+  stroke: var(--color-line-strong);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.locator .here {
+  fill: var(--color-accent);
+  stroke: var(--color-accent);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+/* A position fix: ring and crosshair, so even a tiny municipality can be found on the sheet. */
+.locator .fix circle {
+  fill: none;
+  stroke: var(--color-accent);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.locator .fix path {
+  fill: none;
+  stroke: var(--color-accent);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.locator figcaption {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.callout {
+  padding: var(--space-3) var(--space-4);
+  border: var(--rule-hair) solid var(--color-accent);
+  background: var(--color-sea);
+}
+
+.facts {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.facts h2 {
+  font-size: var(--text-xl);
+}
+
+.facts .table-wrap {
+  max-height: none;
+}
+
+.year {
+  display: block;
+  font-size: var(--text-xs);
+  font-style: italic;
+  color: var(--color-text-muted);
+}
+
+.names {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+  gap: var(--space-1) var(--space-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.names li {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-block: var(--space-1);
+  border-bottom: var(--rule-hair) solid var(--color-line);
+}
+
+/* ---- Position search (home) ---- */
+
+.position {
+  position: relative;
+  display: grid;
+  gap: var(--space-1);
+  flex: 1 1 18rem;
+  max-width: 26rem;
+}
+
+.position[hidden] {
+  display: none;
+}
+
+/* With scripts on, the search keeps its place while it waits to be shown, so the map never jumps. */
+.js .position[hidden] {
+  display: grid;
+  visibility: hidden;
+}
+
+.position label {
+  font-family: var(--font-label);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+}
+
+.position input {
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  border: var(--rule-neat) solid var(--color-line-strong);
+  border-radius: var(--radius);
+  background: var(--color-sea);
+  color: var(--color-text);
+  font-family: var(--font-serif);
+  font-size: var(--text-lg);
+}
+
+.position input::placeholder {
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+.position-status {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  min-height: 1.2em;
+}
+
+/* Results float over the map, so typing never shifts the layout. */
+.position-results {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 3;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: var(--rule-hair) solid var(--color-line-strong);
+  background: var(--color-sea);
+  box-shadow: var(--shadow-sheet);
+}
+
+.position-results:empty {
+  display: none;
+}
+
+.position-results a {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-4);
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.position-results a:hover,
+.position-results a:focus-visible {
+  background: var(--color-shoal);
+  outline-offset: -3px;
+}
+
+.position-uf {
+  font-family: var(--font-label);
+  font-size: var(--text-sm);
+  letter-spacing: var(--tracking-label);
+  color: var(--color-text-muted);
+}
+
+/* ---- Reading pages (about) ---- */
+
+.prose {
+  display: grid;
+  gap: var(--space-4);
+  align-content: start;
+  max-width: 52rem;
+}
+
+.prose h2 {
+  margin-top: var(--space-5);
+  font-size: var(--text-xl);
+}
+
+.prose ul {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding-left: var(--space-5);
+  max-width: var(--measure);
+}
+
+.prose .table-wrap {
+  max-height: none;
+}
+
+/* A position such as "5.554º de 5.569" must never break across lines. */
+.facts .num {
+  white-space: nowrap;
+}
+
+/*
+ * On a phone the indicator table would be wider than the screen and hide the position columns,
+ * which are the point of the page. Each row becomes a block: the indicator, then three labelled lines.
+ */
+@media (max-width: 40rem) {
+  .facts .atlas-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .facts .atlas-table,
+  .facts .atlas-table tbody,
+  .facts .atlas-table tr,
+  .facts .atlas-table th,
+  .facts .atlas-table td {
+    display: block;
+  }
+
+  .facts .atlas-table caption {
+    display: block;
+    width: auto;
+  }
+
+  .facts .atlas-table tr {
+    padding: var(--space-3);
+    border-top: var(--rule-hair) solid var(--color-line);
+  }
+
+  .facts .atlas-table tr:first-child {
+    border-top: 0;
+  }
+
+  .facts .atlas-table th[scope='row'],
+  .facts .atlas-table td {
+    padding: 0;
+    border: 0;
+  }
+
+  .facts .atlas-table th[scope='row'] {
+    padding-bottom: var(--space-2);
+  }
+
+  .facts .atlas-table td {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding-block: var(--space-1);
+  }
+
+  .facts .atlas-table td::before {
+    content: attr(data-label);
+    font-family: var(--font-label);
+    font-style: normal;
+    letter-spacing: var(--tracking-label);
+    color: var(--color-text-muted);
+  }
+}
+
+/* ---- First viewport: the margin reads as chart furniture, not a side panel ---- */
+
+.cartouche {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.rose-corner {
+  display: none;
+}
+
+@media (min-width: 60rem) {
+  .margin--chart {
+    align-self: stretch;
+    grid-template-rows: auto 1fr auto;
+  }
+
+  .margin--chart .cartouche {
+    grid-row: 3;
+  }
+
+  /* On a municipality page the notes follow the reader down the tables instead of leaving a void. */
+  .margin--sticky {
+    align-self: start;
+    position: sticky;
+    top: var(--space-4);
+  }
+}
+
+@media (max-width: 59.99rem) {
+  .margin .rose {
+    display: none;
+  }
+
+  /* The compass moves inside the plate corner, tied to the map instead of floating between controls. */
+  .rose-corner {
+    display: block;
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: var(--rose-size-small);
+  }
+}
+
+.table-wrap--all {
+  max-height: none;
+}
+
+/* ---- Twin page ---- */
+
+.twin-form {
+  display: grid;
+  gap: var(--space-5);
+}
+
+/* Hidden forms keep their space (visibility, not display) so showing them later moves nothing. */
+.twin-form[hidden],
+.compare-form[hidden] {
+  visibility: hidden;
+}
+
+.twin-out[hidden] {
+  display: none;
+}
+
+.twin-axes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-5);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.twin-axes legend {
+  padding: 0;
+  margin-bottom: var(--space-2);
+  font-family: var(--font-label);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+}
+
+.twin-axis {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 2.75rem;
+  cursor: pointer;
+}
+
+.twin-axis input {
+  width: 1.25rem;
+  height: 1.25rem;
+  accent-color: var(--color-accent);
+}
+
+.twin-list {
+  display: grid;
+  gap: var(--space-5);
+  margin: var(--space-4) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.twin-list > li {
+  padding-top: var(--space-4);
+  border-top: var(--rule-hair) solid var(--color-line-strong);
+}
+
+.twin-list h3 {
+  margin: 0;
+  font-size: var(--text-lg);
+}
+
+.twin-meta {
+  margin: var(--space-1) 0 var(--space-3);
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+.twin-list ul {
+  margin: 0;
+  padding-left: var(--space-5);
+  font-size: var(--text-sm);
+}
+
+/* ---- Compare page ---- */
+
+.compare-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-5);
+}
+
+.compare-out[hidden] {
+  display: none;
+}
+
+.compare-out {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.compare-out .facts {
+  margin-top: var(--space-4);
+}
+
+/* Rankings keep one line per municipality on a phone: position, name, value. */
+@media (max-width: 40rem) {
+  .facts .rank-table tr {
+    display: grid;
+    grid-template-columns: 3.5rem 1fr auto;
+    align-items: baseline;
+    gap: var(--space-2);
+    padding-block: var(--space-2);
+  }
+
+  .facts .rank-table th[scope='row'] {
+    padding-bottom: 0;
+  }
+
+  .facts .rank-table td {
+    display: block;
+    padding-block: 0;
+  }
+
+  .facts .rank-table td::before {
+    content: none;
+  }
+}
+
+/* ---- Whole-country map (canvas) ---- */
+
+.button {
+  min-height: 2.75rem;
+  min-width: 2.75rem;
+  padding: var(--space-2) var(--space-4);
+  border: var(--rule-neat) solid var(--color-line-strong);
+  border-radius: var(--radius);
+  background: var(--color-sea);
+  color: var(--color-text);
+  font-family: var(--font-label);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  cursor: pointer;
+}
+
+.button:hover {
+  background: var(--color-shoal);
+}
+
+.brasil-load {
+  display: grid;
+  gap: var(--space-3);
+  justify-items: start;
+}
+
+.brasil-load[hidden],
+.brasil-stage[hidden] {
+  display: none;
+}
+
+.brasil-stage {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.brasil-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-5);
+  align-items: end;
+}
+
+.brasil-canvas-wrap {
+  position: relative;
+  max-width: 48rem;
+}
+
+.brasil-canvas-wrap canvas {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  background: var(--color-sea);
+  border: var(--rule-hair) solid var(--color-line-strong);
+  touch-action: none;
+  cursor: grab;
+}
+
+.brasil-buttons {
+  position: absolute;
+  left: var(--space-3);
+  bottom: var(--space-3);
+  display: flex;
+  gap: var(--space-2);
+}
+
+.brasil-hover {
+  min-height: 1.5em;
+  margin: 0;
+  font-size: var(--text-sm);
+}
+
+.brasil-selected p {
+  margin: 0 0 var(--space-1);
+}
+
+.brasil-ufs {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+  gap: var(--space-1) var(--space-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* The legend sits beside the map on a wide screen and under it on a narrow one, never far from it. */
+.brasil-legend-inline {
+  max-width: 48rem;
+}
+
+@media (max-width: 59.99rem) {
+  .brasil-legend-aside {
+    display: none;
+  }
+}
+
+@media (min-width: 60rem) {
+  .brasil-legend-inline {
+    display: none;
+  }
+}
+
+/* ---- Home: the twin as a cross bearing, the measured pairs, the other charts ---- */
+
+/* Search results: the city's page, and its twins one step to the right. */
+.position-results li {
+  display: flex;
+  align-items: stretch;
+}
+
+.position-results li > a:first-child {
+  flex: 1;
+}
+
+.position-results a.position-twins {
+  align-items: center;
+  padding-inline: var(--space-3);
+  border-left: var(--rule-hair) solid var(--color-line);
+  color: var(--color-accent);
+  font-family: var(--font-label);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+}
+
+.twin-entry {
+  display: grid;
+  gap: var(--space-3);
+  justify-items: start;
+  padding: var(--space-4);
+  border: var(--rule-neat) solid var(--color-line-strong);
+  background: var(--color-sea);
+}
+
+.twin-entry h2 {
+  font-size: var(--text-xl);
+  line-height: var(--leading-tight);
+}
+
+.twin-entry p {
+  font-size: var(--text-sm);
+  line-height: var(--leading-body);
+}
+
+.twin-entry-action {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: var(--space-2) var(--space-4);
+  /* Magenta is the chart's ink for the active thing: the one action this block exists for. */
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  font-family: var(--font-label);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  text-decoration: none;
+}
+
+.twin-entry-action:hover {
+  background: var(--color-line-strong);
+  color: var(--color-sea);
+}
+
+.bearings {
+  display: grid;
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+}
+
+.bearings h2 {
+  font-size: var(--text-xl);
+}
+
+.bearings-intro {
+  max-width: var(--measure);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.bearings-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: var(--rule-hair) solid var(--color-line-strong);
+}
+
+.bearings-list li {
+  display: grid;
+  gap: var(--space-1);
+  padding-block: var(--space-4);
+  border-bottom: var(--rule-hair) solid var(--color-line);
+}
+
+.bearing-pair {
+  display: grid;
+  grid-template-columns: auto minmax(3rem, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--color-text);
+  font-size: var(--text-lg);
+  text-decoration: none;
+}
+
+.bearing-end {
+  white-space: nowrap;
+}
+
+.bearing-uf {
+  font-family: var(--font-label);
+  font-size: var(--text-sm);
+  letter-spacing: var(--tracking-label);
+  color: var(--color-text-muted);
+}
+
+/* The bearing: a dashed magenta line with the measured distance set on it, like a sounding on a course. */
+.bearing-line {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  height: 1.5rem;
+}
+
+.bearing-line::before {
+  content: '';
+  position: absolute;
+  inset: 50% 0 auto;
+  border-top: var(--rule-neat) dashed var(--color-accent);
+  mix-blend-mode: var(--overprint-blend);
+}
+
+.bearing-line .sounding {
+  position: relative;
+  padding-inline: var(--space-2);
+  background: var(--color-sea);
+  font-size: var(--text-sm);
+  font-style: italic;
+  color: var(--color-accent);
+}
+
+.bearing-pair:hover .bearing-end,
+.bearing-pair:focus-visible .bearing-end {
+  text-decoration: underline;
+  text-decoration-color: var(--color-accent);
+  text-underline-offset: 0.2em;
+}
+
+.bearing-note {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.charts {
+  align-content: start;
+  align-self: start;
+  display: grid;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+}
+
+.charts h2 {
+  font-family: var(--font-label);
+  font-size: var(--text-sm);
+  letter-spacing: var(--tracking-label);
+}
+
+.charts ul {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.charts li {
+  display: grid;
+}
+
+.charts li span {
+  color: var(--color-text-muted);
+}
+
+/* On a phone the bearing turns vertical: it runs down a gutter from one name to the other, with the
+   distance set beside it. */
+@media (max-width: 40rem) {
+  .bearing-pair {
+    grid-template-columns: 1.25rem 1fr;
+    grid-template-rows: auto auto auto;
+    column-gap: var(--space-3);
+    row-gap: var(--space-2);
+    font-size: var(--text-base);
+  }
+
+  .bearing-end {
+    grid-column: 2;
+    white-space: normal;
+  }
+
+  .bearing-end:first-child {
+    grid-row: 1;
+  }
+
+  .bearing-end:nth-child(3) {
+    grid-row: 3;
+  }
+
+  .bearing-line {
+    grid-column: 1 / -1;
+    grid-row: 1 / 4;
+    align-self: stretch;
+    display: grid;
+    grid-template-columns: 1.25rem 1fr;
+    align-items: center;
+    column-gap: var(--space-3);
+    height: auto;
+    pointer-events: none;
+  }
+
+  .bearing-line::before {
+    inset: 0.7em auto 0.7em calc(0.625rem - 1px);
+    border-top: 0;
+    border-left: var(--rule-neat) dashed var(--color-accent);
+  }
+
+  .bearing-line .sounding {
+    grid-column: 2;
+    justify-self: start;
+    padding-inline: 0;
+    background: none;
+  }
+}
+
+@media (min-width: 60rem) {
+  /* Compass, twin entry, free space, the legend at the foot of the plate, then the other charts. */
+  /* Row 1: the plate and its margin. Row 2: the measured pairs under the plate, the other charts
+     under the margin. The margin stacks from the top instead of pinning the legend to the plate's foot. */
+  .margin--chart.margin--lead {
+    grid-column: 2;
+    grid-row: 1;
+    grid-template-rows: auto;
+  }
+
+  .atlas > .bearings {
+    grid-column: 1;
+    grid-row: 2;
+    margin-top: 0;
+  }
+
+  .atlas > .charts {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .margin--lead .cartouche {
+    grid-row: auto;
+  }
+}
+
+.bearings {
+  max-width: 56rem;
+}
+
+@media (max-width: 59.99rem) {
+  /* On a narrow screen the indicator and the legend stay right under the map they explain; the twin follows. */
+  .margin--lead .cartouche {
+    order: 1;
+  }
+
+  .margin--lead .margin-lead {
+    order: 2;
+  }
+
+}
+
+/* Twin and compare: the results come after the notes in the page, so on a phone they are the last
+   thing on the sheet and appearing moves nothing (no layout shift, even when a link opens them at
+   once). On a wide screen they sit under the form and the notes run beside them. */
+.atlas > .twin-out,
+.atlas > .compare-out {
+  min-width: 0;
+}
+
+@media (min-width: 60rem) {
+  .atlas > .twin-out,
+  .atlas > .compare-out {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .margin--beside-results {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
+}

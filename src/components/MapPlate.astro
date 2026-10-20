@@ -1,0 +1,74 @@
+---
+import CompassRose from './CompassRose.astro';
+
+// The map as a printed plate: server-drawn SVG, readable with no JavaScript. Colour steps are
+// classes (s0..s6, or s-none for "sem dado") so the browser script can recolour without redrawing.
+interface PlateItem {
+  codigo: string;
+  nome: string;
+  d: string;
+  cx: number;
+  cy: number;
+  /** Position on the colour ramp, or null for "sem dado". */
+  step: number | null;
+  valueText: string;
+  /** Short form of the value, printed under the tag as a sounding. */
+  compact?: string | undefined;
+  /** Present when the shape leads to its own page; the shape then becomes a keyboard-reachable link. */
+  href?: string | undefined;
+  /** Short lettering printed on the shape, e.g. a state abbreviation. */
+  tag?: string;
+}
+
+interface Props {
+  viewBox: string;
+  label: string;
+  items: PlateItem[];
+}
+
+const { viewBox, label, items } = Astro.props;
+const linked = items.some((item) => item.href !== undefined);
+const shapeClass = (step: number | null) => `shape ${step === null ? 's-none' : `s${String(step)}`}`;
+---
+
+<figure class="plate" data-plate>
+  <svg viewBox={viewBox} role={linked ? 'group' : 'img'} aria-label={label}>
+    <defs>
+      <pattern id="sem-dado" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+        <rect width="6" height="6" style="fill: var(--color-land)"></rect>
+        <line x1="0" y1="0" x2="0" y2="6" style="stroke: var(--scale-no-data-hatch); stroke-width: 1.2"></line>
+      </pattern>
+    </defs>
+    <g data-shapes>
+      {
+        items.map((item) =>
+          item.href !== undefined ? (
+            <a href={item.href} aria-label={`${item.nome}: ${item.valueText}`}>
+              <path class={shapeClass(item.step)} d={item.d} data-codigo={item.codigo}></path>
+            </a>
+          ) : (
+            <path class={shapeClass(item.step)} d={item.d} data-codigo={item.codigo}></path>
+          ),
+        )
+      }
+    </g>
+    <!-- Outline of the active shape, drawn on top without moving any node (moving a focused link would blur it). -->
+    <path class="shape-highlight" data-highlight d="" aria-hidden="true"></path>
+    <g aria-hidden="true">
+      {
+        items
+          .filter((item) => item.tag !== undefined)
+          .map((item) => (
+            <>
+              <text class="shape-label" x={item.cx} y={item.cy - 4}>{item.tag}</text>
+              {item.compact !== undefined && (
+                <text class="shape-sounding" x={item.cx} y={item.cy + 9} data-sounding={item.codigo}>{item.compact}</text>
+              )}
+            </>
+          ))
+      }
+    </g>
+  </svg>
+  <div class="rose-corner" aria-hidden="true"><CompassRose /></div>
+  <div class="tip" data-tip hidden></div>
+</figure>

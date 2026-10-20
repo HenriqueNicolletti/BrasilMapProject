@@ -1,0 +1,28 @@
+---
+// Authored compass rose: the chart's one magenta ornament. Decorative, so hidden from assistive tech.
+---
+
+<svg class="compass" viewBox="-100 -100 200 200" aria-hidden="true" focusable="false">
+  <circle r="94" fill="none" stroke="currentColor" stroke-width="1.5"></circle>
+  <circle r="86" fill="none" stroke="currentColor" stroke-width="0.75"></circle>
+  <circle r="86" fill="none" stroke="currentColor" stroke-width="5" stroke-dasharray="0.75 6.5" opacity="0.7"></circle>
+  <g fill="currentColor">
+    <path d="M0 -80 L9 -9 L0 0 L-9 -9 Z"></path>
+    <path d="M80 0 L9 9 L0 0 L9 -9 Z"></path>
+    <path d="M0 80 L-9 9 L0 0 L9 9 Z"></path>
+    <path d="M-80 0 L-9 -9 L0 0 L-9 9 Z"></path>
+  </g>
+  <g fill="none" stroke="currentColor" stroke-width="1">
+    <path d="M0 0 L56 -56 L7 -7 Z M0 0 L56 56 L7 7 Z M0 0 L-56 56 L-7 7 Z M0 0 L-56 -56 L-7 -7 Z"></path>
+  </g>
+  <path d="M0 -96 L5 -104 L-5 -104 Z" fill="currentColor" transform="translate(0 8)"></path>
+</svg>
+
+<style>
+  .compass {
+    display: block;
+    width: 100%;
+    height: auto;
+    color: var(--color-accent);
+  }
+</style>

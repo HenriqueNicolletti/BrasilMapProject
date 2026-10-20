@@ -1,0 +1,61 @@
+---
+// Stays hidden until the script runs, so a no-JS visitor never sees a dead control.
+---
+
+<button type="button" class="theme-toggle" data-theme-toggle hidden>
+  <span data-theme-label>Carta de noite</span>
+</button>
+
+<style>
+  .theme-toggle {
+    padding: var(--space-2) var(--space-4);
+    border: var(--rule-hair) solid var(--color-line-strong);
+    border-radius: var(--radius);
+    background: var(--color-sea);
+    color: var(--color-text);
+    font-family: var(--font-label);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    letter-spacing: var(--tracking-label);
+    cursor: pointer;
+    transition:
+      background-color var(--duration-quick) var(--ease-out),
+      color var(--duration-quick) var(--ease-out);
+  }
+
+  .theme-toggle:hover {
+    background: var(--color-line-strong);
+    color: var(--color-sea);
+  }
+
+  .theme-toggle[hidden] {
+    display: none;
+  }
+</style>
+
+<script is:inline>
+  const button = document.querySelector('[data-theme-toggle]');
+  const label = document.querySelector('[data-theme-label]');
+  const media = window.matchMedia('(prefers-color-scheme: dark)');
+
+  const isDark = () => {
+    const forced = document.documentElement.dataset.theme;
+    return forced ? forced === 'dark' : media.matches;
+  };
+  const renderLabel = () => {
+    label.textContent = isDark() ? 'Carta de dia' : 'Carta de noite';
+  };
+
+  button.hidden = false;
+  renderLabel();
+  button.addEventListener('click', () => {
+    const next = isDark() ? 'light' : 'dark';
+    document.documentElement.dataset.theme = next;
+    try {
+      localStorage.setItem('theme', next);
+    } catch {
+      /* storage blocked: the choice lasts for this page view only */
+    }
+    renderLabel();
+  });
+</script>

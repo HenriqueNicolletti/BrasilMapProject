@@ -1,0 +1,128 @@
+@import './tokens.css';
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--color-sea);
+  color: var(--color-text);
+  font-family: var(--font-serif);
+  font-size: 100%;
+  line-height: var(--leading-body);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  scrollbar-color: var(--color-line-strong) var(--color-sea);
+}
+
+body {
+  margin: 0;
+  display: flow-root; /* keeps a child's margin inside the body so the page never overflows the viewport */
+  min-height: 100dvh;
+  background: var(--color-sea);
+  font-size: var(--text-base);
+  font-variant-numeric: lining-nums;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  font-weight: 600;
+  line-height: var(--leading-tight);
+  text-wrap: balance;
+}
+
+p {
+  margin: 0;
+  max-width: var(--measure);
+  text-wrap: pretty;
+}
+
+a {
+  color: var(--color-accent);
+  text-decoration-thickness: var(--rule-hair);
+  text-underline-offset: 0.2em;
+}
+
+a:hover {
+  text-decoration-thickness: var(--rule-neat);
+}
+
+/* Numbers in tables and soundings align in columns. */
+table,
+.sounding {
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* Browser surfaces: selection, focus and form controls belong to the sheet too. */
+::selection {
+  background: var(--color-selection);
+  color: var(--color-on-selection);
+}
+
+:focus-visible {
+  outline: var(--rule-neat) solid var(--color-focus);
+  outline-offset: 3px;
+}
+
+button,
+input {
+  font: inherit;
+  color: inherit;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/*
+ * The one authored motion: navigating pastes the next sheet over the current one, like a new layer on a
+ * chart. Browsers without cross-document view transitions simply swap pages.
+ */
+@view-transition {
+  navigation: auto;
+}
+
+::view-transition-old(root) {
+  animation: none;
+}
+
+::view-transition-new(root) {
+  animation: paste-on var(--duration-settle) var(--ease-out) both;
+}
+
+@keyframes paste-on {
+  from {
+    clip-path: inset(0 0 0 100%);
+  }
+
+  to {
+    clip-path: inset(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @view-transition {
+    navigation: none;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

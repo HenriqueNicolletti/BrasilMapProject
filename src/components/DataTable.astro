@@ -1,0 +1,33 @@
+---
+// The keyboard and screen-reader alternative to the map: the same values, as a table.
+interface Props {
+  title: string;
+  intro: string;
+  nameHead: string;
+  valueHead: string;
+  caption: string;
+  /** Row markup from `rowsHtml`, so the browser script can redraw the same rows. */
+  rows: string;
+  /** Show every row with no inner scroll box (short tables), so a keyboard is not trapped in one. */
+  showAll?: boolean;
+}
+
+const { title, intro, nameHead, valueHead, caption, rows, showAll = false } = Astro.props;
+---
+
+<section class="table-section" id="tabela" aria-labelledby="tabela-titulo">
+  <h2 id="tabela-titulo">{title}</h2>
+  <p>{intro}</p>
+  <div class={showAll ? 'table-wrap table-wrap--all' : 'table-wrap'} role="region" aria-labelledby="tabela-titulo" tabindex="0">
+    <table class="atlas-table">
+      <caption data-caption>{caption}</caption>
+      <thead>
+        <tr>
+          <th scope="col" data-sort-th="nome" aria-sort="ascending">{nameHead}</th>
+          <th scope="col" class="num" data-sort-th="valor" aria-sort="none"><span data-value-head>{valueHead}</span></th>
+        </tr>
+      </thead>
+      <tbody data-rows set:html={rows}></tbody>
+    </table>
+  </div>
+</section>

@@ -1,0 +1,50 @@
+---
+// The chart's margin: compass, indicator picker, legend and the notes that say where the data comes from.
+// The home adds a `lead` slot under the compass (in the first screen on a wide display, after the
+// legend on a narrow one) and lists its other charts itself; pages without it keep the plain row of links.
+import CompassRose from './CompassRose.astro';
+
+interface Props {
+  indicators: { id: string; label: string }[];
+  defaultId: string;
+  /** Legend markup from `legendHtml`. */
+  legend: string;
+  legendTitle: string;
+  source: string;
+  scopeNote: string;
+}
+
+const { indicators, defaultId, legend, legendTitle, source, scopeNote } = Astro.props;
+const hasLead = Astro.slots.has('lead');
+---
+
+<aside class:list={['margin', 'margin--chart', { 'margin--lead': hasLead }]} aria-label="Legenda e controles do mapa">
+  <div class="rose"><CompassRose /></div>
+
+  {hasLead && <div class="margin-lead"><slot name="lead" /></div>}
+
+  <div class="cartouche">
+  <div class="field" data-indicator-field hidden>
+    <label for="indicator-select">Indicador</label>
+    <select id="indicator-select" data-indicator-select>
+      {indicators.map((indicator) => <option value={indicator.id} selected={indicator.id === defaultId}>{indicator.label}</option>)}
+    </select>
+  </div>
+
+  <div class="notes">
+    <h2>{legendTitle}</h2>
+    <ul class="legend" data-legend set:html={legend}></ul>
+    <p class="source" data-source>{source}</p>
+    <p class="source">{scopeNote}</p>
+    {
+      !hasLead && (
+        <p class="source">
+          <a href="/brasil/">Brasil inteiro</a> · <a href="/gemeo/">Município gêmeo</a> · <a href="/comparar/">Comparar</a> ·{' '}
+          <a href="/ranking/">Rankings</a> · <a href="/sobre/">Sobre os dados</a>
+        </p>
+      )
+    }
+  </div>
+  </div>
+
+</aside>

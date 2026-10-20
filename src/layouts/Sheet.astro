@@ -1,0 +1,25 @@
+---
+import ThemeToggle from '../components/ThemeToggle.astro';
+import '../styles/atlas.css';
+import Base from './Base.astro';
+
+interface Props {
+  title: string;
+  description: string;
+  /** Link back one level, e.g. from a state to the country. */
+  back?: { href: string; label: string };
+  image?: string | undefined;
+}
+
+const { title, description, back, image } = Astro.props;
+---
+
+<Base title={title} description={description} image={image}>
+  <div class="sheet">
+    <header class="sheet-head">
+      {back ? <a class="back" href={back.href}>{back.label}</a> : <span></span>}
+      <ThemeToggle />
+    </header>
+    <slot />
+  </div>
+</Base>

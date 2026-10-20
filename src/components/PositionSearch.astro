@@ -1,0 +1,23 @@
+---
+// "Posição": the chart's way to ask where a place is. The form stays hidden until the script runs,
+// so a visitor without JavaScript uses the state map and the state list instead of a dead field.
+---
+
+<form class="position" role="search" data-position hidden>
+  <label for="position-input">Posição</label>
+  <input
+    id="position-input"
+    type="search"
+    name="q"
+    autocomplete="off"
+    spellcheck="false"
+    placeholder="Nome da sua cidade"
+    aria-describedby="position-status"
+  />
+  <p class="position-status" id="position-status" role="status" data-position-status></p>
+  <ul class="position-results" data-position-results></ul>
+</form>
+
+<script>
+  import '../scripts/position.ts';
+</script>

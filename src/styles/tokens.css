@@ -1,0 +1,142 @@
+/*
+ * Design tokens for Brasil em Mapas: a printed sea chart, in a closed ink set.
+ * Day chart by default, night chart under prefers-color-scheme: dark or [data-theme='dark'].
+ * Components read only the semantic tokens (--color-*, --font-*, --space-*, --text-*); the
+ * raw inks below exist to feed them and are never used directly in a component.
+ */
+
+:root {
+  /* Raw inks, day chart */
+  --ink-black: #14171c;
+  --ink-deep: #1b3f7a;
+  --ink-shoal: #bfdde8;
+  --ink-sea: #e8f1f4;
+  --ink-land: #f0de9a;
+  --ink-magenta: #c4155a;
+  --ink-note: #3a4a66;
+
+  /* Semantic colour */
+  --color-sea: var(--ink-sea);
+  --color-land: var(--ink-land);
+  --color-shoal: var(--ink-shoal);
+  --color-text: var(--ink-black);
+  --color-text-muted: var(--ink-note);
+  --color-line: color-mix(in srgb, var(--ink-deep) 28%, transparent);
+  --color-line-strong: var(--ink-deep);
+  --color-accent: var(--ink-magenta);
+  --color-on-accent: var(--ink-sea);
+  --color-focus: var(--ink-magenta);
+  --color-selection: var(--ink-deep);
+  --color-on-selection: var(--ink-sea);
+
+  /* Choropleth: sequential, light to dark. Lightness steps stay distinct in greyscale. */
+  --scale-seq-1: #c9e0ec;
+  --scale-seq-2: #a3cde0;
+  --scale-seq-3: #7bb4d2;
+  --scale-seq-4: #4f8bb8;
+  --scale-seq-5: #2c5f9a;
+  --scale-seq-6: #1b3f7a;
+  --scale-seq-7: #0f2552;
+  /* Absent data is its own mark, never a colour on the scale. */
+  --scale-no-data: var(--ink-land);
+  --scale-no-data-hatch: var(--ink-note);
+
+  /* Type */
+  --font-serif: 'Source Serif 4 Variable', 'Source Serif 4', Georgia, 'Times New Roman', serif;
+  --font-label: 'Barlow Semi Condensed', 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif;
+
+  --text-xs: 0.8125rem;
+  --text-sm: 0.9375rem;
+  --text-base: 1.0625rem;
+  --text-lg: 1.375rem;
+  --text-xl: 1.875rem;
+  --text-display: clamp(2rem, 1rem + 4vw, 3.5rem);
+  /* Lettering printed on the map, in SVG units of the plate (the plate scales them with the map). */
+  --text-map-label: 14px;
+  --text-map-sounding: 11px;
+  --map-halo: 3px;
+
+  --leading-tight: 1.05;
+  --leading-snug: 1.3;
+  --leading-body: 1.55;
+  --tracking-display: -0.02em;
+  --tracking-label: 0.06em;
+  --measure: 68ch;
+
+  /* Space: 4px base, steps visible at a glance */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2.5rem;
+  --gutter: clamp(1rem, 0.4rem + 2.6vw, 2.5rem);
+
+  /* Chart rules: charts have square corners and ruled lines, never soft cards */
+  --rule-hair: 1px;
+  --rule-neat: 2px;
+  /* The graticule printed on every sheet, and the compass rose. */
+  --graticule: 72px;
+  --rose-size: clamp(6rem, 14vw, 9rem);
+  --rose-size-small: 4.5rem;
+  --radius: 0;
+  --shadow-sheet: 0 1px 0 var(--color-line), 0 10px 24px -12px color-mix(in srgb, var(--ink-black) 35%, transparent);
+
+  /* Magenta overprints the blue ink: multiply on the day chart, plain on the night chart. */
+  --overprint-blend: multiply;
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-quick: 160ms;
+  --duration-settle: 480ms;
+
+  color-scheme: light;
+}
+
+/* Night chart: dimmed inks, same hues, so the sheet keeps its identity in low light. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --ink-black: #dbe6ef;
+    --ink-deep: #7fb0e8;
+    --ink-shoal: #1f3550;
+    --ink-sea: #0c1521;
+    --ink-land: #3b3418;
+    --ink-magenta: #ff72a6;
+    --ink-note: #9db3cb;
+
+    --scale-seq-1: #1c3856;
+    --scale-seq-2: #27557f;
+    --scale-seq-3: #3573ad;
+    --scale-seq-4: #5593cf;
+    --scale-seq-5: #7eb3e6;
+    --scale-seq-6: #aed0f3;
+    --scale-seq-7: #dcecfb;
+
+    --overprint-blend: normal;
+    --color-on-accent: #1a0510;
+    --color-on-selection: #0c1521;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme='dark'] {
+  --ink-black: #dbe6ef;
+  --ink-deep: #7fb0e8;
+  --ink-shoal: #1f3550;
+  --ink-sea: #0c1521;
+  --ink-land: #3b3418;
+  --ink-magenta: #ff72a6;
+  --ink-note: #9db3cb;
+
+  --scale-seq-1: #1c3856;
+  --scale-seq-2: #27557f;
+  --scale-seq-3: #3573ad;
+  --scale-seq-4: #5593cf;
+  --scale-seq-5: #7eb3e6;
+  --scale-seq-6: #aed0f3;
+  --scale-seq-7: #dcecfb;
+
+  --overprint-blend: normal;
+  --color-on-accent: #1a0510;
+  --color-on-selection: #0c1521;
+  color-scheme: dark;
+}
