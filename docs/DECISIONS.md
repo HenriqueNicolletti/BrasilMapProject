@@ -449,5 +449,8 @@ Lighthouse 13.5 no celular simulado, direto no site publicado (desempenho / aces
 
 Os critérios do projeto (home e município, 90+ nas quatro) passam. Minas fica em 81, o custo aceito da malha `intermediaria` (D3.7, atualização).
 
+### D11.5 Página 404
+`src/pages/404.astro` vira `dist/404.html`, que a Vercel serve com status 404 em qualquer endereço desconhecido (antes era um texto puro da Vercel). Sem JavaScript: explica o formato do endereço de município, com um exemplo real (`bom-jesus-pi`), e leva às cinco entradas do atlas. Fica fora do índice de busca, porque o Pagefind só indexa páginas com `data-pagefind-body`. O único erro no console dessa página é o próprio status 404 do documento, que o navegador sempre registra; é o comportamento correto. Testes: status 404, links e axe nos dois temas e nas duas larguras.
+
 ### D3.7 (atualização): malha municipal fica em `qualidade=intermediaria`
 Decidido em 2026-10-20, depois de ver Minas Gerais nas duas qualidades lado a lado. A `minima` corta a geometria de MG de 897 KB para 211 KB e quase não muda o desenho no tamanho da página, mas fica angulosa com zoom, o que pesa no mapa de `/brasil/`. Fica a `intermediaria`. Custo aceito: `/uf/mg/` e outros estados grandes ficam abaixo de 90 em desempenho no Lighthouse do celular (85 em MG, D10.4). Isso está fora dos critérios do projeto, que pedem 90+ só na home e na página de município, e as duas passam.
