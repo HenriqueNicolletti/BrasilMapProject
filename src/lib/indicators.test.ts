@@ -6,7 +6,7 @@ const CODE = '3550308';
 function tablesFor(values: Partial<Record<RawKey, number | null>>): RawTables {
   const keys: RawKey[] = [
     'pop', 'area', 'dens', 'idadeMediana', 'envelhecimento', 'popTotal', 'popUrbana', 'pib',
-    'vaTotal', 'vaAgro', 'vaInd', 'vaServ', 'vaAdm', 'domEsgotoTotal', 'domEsgotoRede',
+    'vaTotal', 'vaAgro', 'vaInd', 'vaServ', 'vaAdm', 'rendaPc', 'domEsgotoTotal', 'domEsgotoRede',
     'domLixoTotal', 'domLixoColetado',
   ];
   const tables = {} as Record<RawKey, Map<string, number | null>>;
@@ -27,16 +27,22 @@ const FULL = {
   popTotal: 1000, popUrbana: 800,
   pib: 5000, // mil reais
   vaTotal: 4000, vaAgro: 400, vaInd: 1000, vaServ: 1600, vaAdm: 1000,
+  rendaPc: 1182.47,
   domEsgotoTotal: 300, domEsgotoRede: 150, domLixoTotal: 300, domLixoColetado: 270,
 } as const;
 
 describe('INDICATORS', () => {
-  it('defines the 13 indicators of the twin profile in 4 axes', () => {
-    expect(INDICATORS).toHaveLength(13);
+  it('defines the 14 indicators of the twin profile in 4 axes', () => {
+    expect(INDICATORS).toHaveLength(14);
     expect(new Set(INDICATORS.map((i) => i.eixo))).toEqual(
       new Set(['demografia', 'territorio', 'economia', 'infraestrutura']),
     );
-    expect(new Set(INDICATORS.map((i) => i.id)).size).toBe(13);
+    expect(new Set(INDICATORS.map((i) => i.id)).size).toBe(14);
+  });
+
+  it('compares household income per capita on a log scale, in the economy axis', () => {
+    const renda = INDICATORS.find((i) => i.id === 'renda_pc');
+    expect(renda).toMatchObject({ eixo: 'economia', transform: 'log', unidade: 'R$', ano: '2022' });
   });
 });
 
@@ -51,6 +57,11 @@ describe('deriveIndicators', () => {
     expect(column(result, 'dens')).toBe(20);
     expect(column(result, 'idade_mediana')).toBe(33);
     expect(column(result, 'area')).toBe(50);
+    expect(column(result, 'renda_pc')).toBe(1182.47);
+  });
+
+  it('leaves household income as "sem dado" when IBGE has no value', () => {
+    expect(column(deriveIndicators(tablesFor({ ...FULL, rendaPc: null }), CODE), 'renda_pc')).toBeNaN();
   });
 
   it('derives the urban share as a fraction of the total population', () => {

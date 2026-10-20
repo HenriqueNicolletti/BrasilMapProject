@@ -23,6 +23,7 @@ export const INDICATORS: readonly IndicatorDef[] = [
   { id: 'area', rotulo: 'Área territorial', unidade: 'km²', eixo: 'territorio', ano: '2022', fonte: 'Censo 2022, tabela 4714, variável 6318', transform: 'log' },
   { id: 'urbana_pct', rotulo: 'População em área urbana', unidade: 'fração', eixo: 'territorio', ano: '2022', fonte: 'Censo 2022, tabela 9923: urbana ÷ total', transform: 'linear' },
   { id: 'pib_pc', rotulo: 'PIB per capita', unidade: 'R$', eixo: 'economia', ano: '2021 (PIB) e 2022 (população)', fonte: 'PIB dos Municípios, tabela 5938, variável 37 (mil R$) × 1000 ÷ população 2022', transform: 'log' },
+  { id: 'renda_pc', rotulo: 'Renda domiciliar per capita', unidade: 'R$', eixo: 'economia', ano: '2022', fonte: 'Censo 2022, tabela 10295, variável 13431 (média mensal)', transform: 'log' },
   { id: 'va_agro_pct', rotulo: 'Agropecuária no valor adicionado', unidade: 'fração', eixo: 'economia', ano: '2021', fonte: 'PIB dos Municípios, tabela 5938: variável 513 ÷ 498', transform: 'linear' },
   { id: 'va_ind_pct', rotulo: 'Indústria no valor adicionado', unidade: 'fração', eixo: 'economia', ano: '2021', fonte: 'PIB dos Municípios, tabela 5938: variável 517 ÷ 498', transform: 'linear' },
   { id: 'va_serv_pct', rotulo: 'Serviços no valor adicionado', unidade: 'fração', eixo: 'economia', ano: '2021', fonte: 'PIB dos Municípios, tabela 5938: variável 6575 ÷ 498 (exclui administração pública)', transform: 'linear' },
@@ -36,6 +37,7 @@ export type RawKey =
   | 'pop' | 'area' | 'dens' | 'idadeMediana' | 'envelhecimento'
   | 'popTotal' | 'popUrbana'
   | 'pib' | 'vaTotal' | 'vaAgro' | 'vaInd' | 'vaServ' | 'vaAdm'
+  | 'rendaPc'
   | 'domEsgotoTotal' | 'domEsgotoRede' | 'domLixoTotal' | 'domLixoColetado';
 
 export type RawTables = Record<RawKey, ReadonlyMap<string, number | null>>;
@@ -63,6 +65,7 @@ export function deriveIndicators(raw: RawTables, code: string): number[] {
     area: value(raw.area, code),
     urbana_pct: ratio(raw.popUrbana.get(code), raw.popTotal.get(code)),
     pib_pc: pib == null ? Number.NaN : ratio(pib * 1000, pop),
+    renda_pc: value(raw.rendaPc, code),
     va_agro_pct: ratio(raw.vaAgro.get(code), vaTotal),
     va_ind_pct: ratio(raw.vaInd.get(code), vaTotal),
     va_serv_pct: ratio(raw.vaServ.get(code), vaTotal),

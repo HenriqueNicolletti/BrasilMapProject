@@ -76,6 +76,8 @@ const AGREGADOS: Record<string, AgregadoRequest> = {
   esgoto: { tabela: '6805', periodo: '2022', variaveis: ['381'], classificacao: '11558[46292,46290]' },
   lixo: { tabela: '6892', periodo: '2022', variaveis: ['381'], classificacao: '67[10972,2520]' },
   pib: { tabela: '5938', periodo: '2021', variaveis: ['498', '513', '517', '6575', '525', '37'] },
+  // Mean monthly household income per capita; the totals of sex, colour or race and age group.
+  renda: { tabela: '10295', periodo: '2022', variaveis: ['13431'], classificacao: '2[6794]|86[95251]|58[95253]' },
 };
 
 function agregadoUrl(request: AgregadoRequest): string {
@@ -111,6 +113,7 @@ const RAW_SOURCES: RawSource[] = [
   { key: 'vaInd', from: 'pib', variavel: '517', kind: 'measure' },
   { key: 'vaServ', from: 'pib', variavel: '6575', kind: 'measure' },
   { key: 'vaAdm', from: 'pib', variavel: '525', kind: 'measure' },
+  { key: 'rendaPc', from: 'renda', variavel: '13431', categoria: '6794', kind: 'measure' },
 ];
 
 /** One object per line keeps diffs readable and the files small. */

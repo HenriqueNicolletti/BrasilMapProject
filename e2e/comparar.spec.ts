@@ -15,7 +15,7 @@ test('the compare page opens from the query string and shows both cities with th
   await page.goto('/comparar/?a=sao-paulo-sp&b=belo-horizonte-mg');
 
   await expect(page.getByRole('heading', { level: 2, name: 'São Paulo (SP) e Belo Horizonte (MG)' })).toBeVisible();
-  await expect(page.locator('.compare-out tbody tr')).toHaveCount(13);
+  await expect(page.locator('.compare-out tbody tr')).toHaveCount(14);
   const population = page.locator('.compare-out tbody tr', { hasText: 'População residente' });
   await expect(population).toContainText('11.451.999');
   await expect(population).toContainText('1º de 5.570');
@@ -30,7 +30,7 @@ test('picking a second city fills the query string', async ({ page }) => {
   await expect(page.locator('.compare-out')).toBeHidden();
   await page.getByLabel('Segundo município').fill('lucas do rio');
   await page.getByRole('link', { name: /^Lucas do Rio Verde/ }).click();
-  await expect(page.locator('.compare-out tbody tr')).toHaveCount(13);
+  await expect(page.locator('.compare-out tbody tr')).toHaveCount(14);
   expect(page.url()).toContain('b=lucas-do-rio-verde-mt');
 });
 
@@ -58,7 +58,7 @@ test('a ranking works without JavaScript and the index links every indicator', a
   const context = await browser.newContext({ javaScriptEnabled: false });
   const page = await context.newPage();
   await page.goto('/ranking/');
-  await expect(page.locator('main a[href^="/ranking/"]')).toHaveCount(13);
+  await expect(page.locator('main a[href^="/ranking/"]')).toHaveCount(14);
   await page.goto('/ranking/idade-mediana/');
   await expect(page.locator('section[aria-labelledby="rank-maiores"] tbody tr')).toHaveCount(25);
   await context.close();

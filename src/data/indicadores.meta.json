@@ -1,7 +1,7 @@
 {
-  "hash": "5f8a9158e39b4afd",
+  "hash": "0142558426481bd2",
   "linhas": 5571,
-  "colunas": 13,
+  "colunas": 14,
   "indicadores": [
     {
       "id": "pop",
@@ -70,6 +70,16 @@
       "eixo": "economia",
       "ano": "2021 (PIB) e 2022 (população)",
       "fonte": "PIB dos Municípios, tabela 5938, variável 37 (mil R$) × 1000 ÷ população 2022",
+      "transform": "log",
+      "cobertura": 5570
+    },
+    {
+      "id": "renda_pc",
+      "rotulo": "Renda domiciliar per capita",
+      "unidade": "R$",
+      "eixo": "economia",
+      "ano": "2022",
+      "fonte": "Censo 2022, tabela 10295, variável 13431 (média mensal)",
       "transform": "log",
       "cobertura": 5570
     },

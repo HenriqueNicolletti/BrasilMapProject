@@ -12,7 +12,7 @@ const local = (id: number, nome: string, sigla: string, ufId: number): Localidad
 
 const RAW_KEYS: RawKey[] = [
   'pop', 'area', 'dens', 'idadeMediana', 'envelhecimento', 'popTotal', 'popUrbana', 'pib',
-  'vaTotal', 'vaAgro', 'vaInd', 'vaServ', 'vaAdm', 'domEsgotoTotal', 'domEsgotoRede', 'domLixoTotal', 'domLixoColetado',
+  'vaTotal', 'vaAgro', 'vaInd', 'vaServ', 'vaAdm', 'rendaPc', 'domEsgotoTotal', 'domEsgotoRede', 'domLixoTotal', 'domLixoColetado',
 ];
 
 function rawFor(codes: string[]): RawTables {

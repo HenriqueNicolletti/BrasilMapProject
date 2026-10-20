@@ -15,7 +15,7 @@ test('a municipality page shows every indicator with its value, position, source
   await page.goto('/municipio/sao-paulo-sp/');
 
   await expect(page.getByRole('heading', { level: 1, name: 'São Paulo' })).toBeVisible();
-  await expect(page.locator('.facts tbody tr')).toHaveCount(13);
+  await expect(page.locator('.facts tbody tr')).toHaveCount(14);
 
   const population = page.locator('.facts tbody tr', { hasText: 'População residente' });
   await expect(population).toContainText('11.451.999');
@@ -35,7 +35,7 @@ test('a municipality page needs no JavaScript', async ({ browser }) => {
   const page = await context.newPage();
   await page.goto('/municipio/bom-jesus-pi/');
   await expect(page.getByRole('heading', { level: 1, name: 'Bom Jesus' })).toBeVisible();
-  await expect(page.locator('.facts tbody tr')).toHaveCount(13);
+  await expect(page.locator('.facts tbody tr')).toHaveCount(14);
   await expect(page.locator('.locator svg')).toBeVisible();
   await context.close();
 });
@@ -45,7 +45,7 @@ test('a municipality with no data says "sem dado" everywhere and explains why, n
   await expect(page.getByText(/foi criado depois do Censo de 2022/)).toBeVisible();
 
   const rows = page.locator('.facts tbody tr');
-  await expect(rows).toHaveCount(13);
+  await expect(rows).toHaveCount(14);
   for (const row of await rows.all()) {
     const cells = await row.locator('td').allInnerTexts();
     expect(cells).toEqual(['sem dado', 'sem dado', 'sem dado']);
@@ -127,7 +127,7 @@ test('the about page lists the indicators with year and coverage', async ({ page
   const seen = watch(page);
   await page.goto('/sobre/');
   await expect(page.getByRole('heading', { level: 1, name: 'Sobre os dados' })).toBeVisible();
-  await expect(page.locator('table tbody tr')).toHaveCount(13);
+  await expect(page.locator('table tbody tr')).toHaveCount(14);
   await expect(page.getByText(/Sem dado/i).first()).toBeVisible();
   expect(seen.consoleErrors).toEqual([]);
 });

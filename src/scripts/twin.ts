@@ -6,7 +6,7 @@ import { bringIntoView, createPicker, labelOf, loadAtlas, must, whenNeeded } fro
 import { reveal } from './motion.ts';
 
 // The twin is computed here, over the matrix the site itself serves (/dados/). One linear pass over
-// 5.571 × 13 numbers takes a few milliseconds, so there is no worker.
+// 5.571 × 14 numbers takes a few milliseconds, so there is no worker.
 
 const TWIN_COUNT = 6;
 const distanceFormat = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
