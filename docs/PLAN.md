@@ -4,7 +4,7 @@ Atlas interativo dos 5.570 municípios brasileiros com dados públicos do IBGE. 
 
 **Estado: todas as fases (0 a 9) concluídas**, mais a rodada de design da home (D10). As decisões de cada fase estão em `docs/DECISIONS.md` (D0.x a D10.x). A malha municipal fica em `qualidade=intermediaria` (D3.7, atualização).
 
-Código no GitHub (público). No ar em https://brasil-em-mapas.vercel.app, publicado pela integração da Vercel com o GitHub a cada push na `main`. Verificação e Lighthouse do site publicado em D11.4.
+Código no GitHub (público). No ar em https://brasilemmapas.vercel.app, publicado pela integração da Vercel com o GitHub a cada push na `main`. Verificação e Lighthouse do site publicado em D11.4.
 
 ## 1. Objetivo e restrições
 

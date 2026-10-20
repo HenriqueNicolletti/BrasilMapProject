@@ -434,7 +434,7 @@ Limites do plano Hobby (documentação da Vercel, revista em 2026-09-16): um dep
 - `trailingSlash: true`, igual ao `trailingSlash: 'always'` do Astro: `/uf/mg` redireciona para `/uf/mg/`.
 - Cache longo e `immutable` em `/_astro/`, onde todo arquivo tem hash no nome.
 
-### D11.4 Verificação no site publicado (https://brasil-em-mapas.vercel.app)
+### D11.4 Verificação no site publicado (então em https://brasil-em-mapas.vercel.app; hoje em https://brasilemmapas.vercel.app, ver D11.6)
 Todas as rotas respondem 200; `/uf/mg` redireciona (308) para `/uf/mg/`; HTML servido com brotli; `og:image` com URL absoluta do domínio de produção; nenhuma requisição ao IBGE, nem na página de município nem no mapa nacional, que carrega as 28 malhas do próprio site. A busca (sem acento), o gêmeo por link direto e o mapa nacional funcionam, sem erro nem aviso no console.
 
 Lighthouse 13.5 no celular simulado, direto no site publicado (desempenho / acessibilidade / boas práticas / SEO):
@@ -451,6 +451,12 @@ Os critérios do projeto (home e município, 90+ nas quatro) passam. Minas fica 
 
 ### D11.5 Página 404
 `src/pages/404.astro` vira `dist/404.html`, que a Vercel serve com status 404 em qualquer endereço desconhecido (antes era um texto puro da Vercel). Sem JavaScript: explica o formato do endereço de município, com um exemplo real (`bom-jesus-pi`), e leva às cinco entradas do atlas. Fica fora do índice de busca, porque o Pagefind só indexa páginas com `data-pagefind-body`. O único erro no console dessa página é o próprio status 404 do documento, que o navegador sempre registra; é o comportamento correto. Testes: status 404, links e axe nos dois temas e nas duas larguras.
+
+### D11.6 Endereço novo: brasilemmapas.vercel.app
+O domínio de produção passou a ser `brasilemmapas.vercel.app`; o antigo responde `DEPLOYMENT_NOT_FOUND`. Como o build lê o domínio de produção da Vercel (D11.2), o deploy que estava no ar ainda tinha as `og:image` apontando para o endereço antigo: trocar o domínio exige um novo deploy para as imagens de compartilhamento voltarem a funcionar. O commit seguinte refez o build.
+
+### D11.7 Imagens do README
+As capturas em `docs/images/` saem do site publicado, com o Playwright, nos temas claro e escuro; o README usa `<picture>` com `prefers-color-scheme`, então o GitHub mostra o tema de quem visita. Só imagens estáticas (PNG), sem GIF. Desktop em 1440 px; a página de município no celular, em 390 px com densidade 2. Cerca de 3 MB no total.
 
 ## Renda no perfil do gêmeo (2026-10-20)
 
