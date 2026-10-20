@@ -12,7 +12,7 @@ Site 100% estático (Astro), sem servidor, sem banco de dados, sem chave de API 
 |---|---|
 | `/` | Mapa do Brasil por estado, busca de cidade e entrada para o resto |
 | `/uf/[sigla]/` | Mapa municipal do estado, legenda e tabela com todos os municípios |
-| `/municipio/[slug]/` | 13 indicadores em quatro eixos, posição no Brasil e no estado, nomes mais comuns |
+| `/municipio/[slug]/` | 14 indicadores em quatro eixos, posição no Brasil e no estado, nomes mais comuns |
 | `/gemeo/` | Os municípios mais parecidos com o escolhido, com os eixos que você liga e desliga e uma explicação de cada par |
 | `/comparar/?a=…&b=…` | Dois municípios lado a lado |
 | `/ranking/[indicador]/` | Os 25 maiores e os 25 menores de cada indicador |
@@ -23,9 +23,9 @@ Cada número traz a fonte (IBGE) e o ano de referência. Dado ausente aparece co
 
 ## Como o gêmeo é calculado
 
-Em `src/lib/twin.ts`, no navegador, a partir de uma matriz de 5.571 × 13 números:
+Em `src/lib/twin.ts`, no navegador, a partir de uma matriz de 5.571 × 14 números:
 
-1. `log1p` nos indicadores de cauda longa (população, densidade, área, PIB per capita, envelhecimento), depois z-score robusto (mediana e MAD), com os valores cortados em ±4.
+1. `log1p` nos indicadores de cauda longa (população, densidade, área, PIB per capita, renda per capita, envelhecimento), depois z-score robusto (mediana e MAD), com os valores cortados em ±4.
 2. Cada eixo ligado pesa igual, qualquer que seja o número de indicadores dele.
 3. Distância euclidiana ponderada só nos indicadores presentes nos dois municípios. Se menos de 60% dos indicadores ligados puderem ser comparados, o par é deixado de fora e a página diz isso.
 4. Para cada gêmeo, os 3 indicadores mais parecidos e o que mais diverge.
@@ -54,7 +54,7 @@ npm run data:fetch   # baixa e processa os dados do IBGE para src/data/
 - APIs do IBGE: localidades v1, malhas v3, agregados v3 e nomes v2 (`servicodados.ibge.gov.br`).
 - `scripts/fetch-data.ts` baixa para `data/raw/` (cache, fora do git), valida cada resposta com um schema Zod e grava `src/data/`: municípios, UFs, a matriz de indicadores (`indicadores.bin`, Float32, `NaN` = sem dado), nomes do Censo 2010 e as malhas em TopoJSON.
 - Código de município tem 7 dígitos e é sempre `string`. O slug é `nome-uf` sem acento (`bom-jesus-pi`), porque há nomes repetidos entre estados.
-- Fontes e anos: Censo 2022 (população, área, idade, saneamento), PIB dos Municípios 2021, Censo 2010 (nomes). Lista completa em `/sobre/`.
+- Fontes e anos: Censo 2022 (população, área, idade, renda, saneamento), PIB dos Municípios 2021, Censo 2010 (nomes). Lista completa em `/sobre/`.
 
 ## Estrutura
 

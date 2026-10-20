@@ -31,7 +31,7 @@ Total: 13 indicadores em 4 eixos. As porcentagens são derivadas por nós a part
 Consequências:
 - O eixo economia tem 5 indicadores e demografia 4. Como o peso é por eixo e não por indicador (ver `docs/PLAN.md`), isso não distorce o resultado.
 - PIB 2021 dividido por população 2022 mistura anos. Aceito por ser o melhor disponível; a página `/sobre` e o rótulo do indicador dizem isso.
-- Renda do Censo 2022 (tabelas 10299 e similares) existe, mas exige combinar várias classificações. Fica fora da v1: o PIB per capita cobre o eixo economia, e renda pode entrar depois sem mudar a arquitetura.
+- Renda do Censo 2022 (tabelas 10299 e similares) existe, mas exige combinar várias classificações. Fica fora da v1: o PIB per capita cobre o eixo economia, e renda pode entrar depois sem mudar a arquitetura. (Entrou depois, pela tabela 10295: ver D12.1.)
 - Idade mediana e envelhecimento (9515) é a tabela mais lenta (11 s para os 5.570 municípios). Irrelevante no script de dados.
 
 ### D0.2 O município 5.571
@@ -451,6 +451,28 @@ Os critérios do projeto (home e município, 90+ nas quatro) passam. Minas fica 
 
 ### D11.5 Página 404
 `src/pages/404.astro` vira `dist/404.html`, que a Vercel serve com status 404 em qualquer endereço desconhecido (antes era um texto puro da Vercel). Sem JavaScript: explica o formato do endereço de município, com um exemplo real (`bom-jesus-pi`), e leva às cinco entradas do atlas. Fica fora do índice de busca, porque o Pagefind só indexa páginas com `data-pagefind-body`. O único erro no console dessa página é o próprio status 404 do documento, que o navegador sempre registra; é o comportamento correto. Testes: status 404, links e axe nos dois temas e nas duas larguras.
+
+## Renda no perfil do gêmeo (2026-10-20)
+
+### D12.1 Renda domiciliar per capita, 14º indicador
+A tabela 10295 do Censo 2022 traz o rendimento domiciliar per capita por município, sem precisar combinar classificações: basta pedir o total de cada uma (`classificacao=2[6794]|86[95251]|58[95253]`, total de sexo, de cor ou raça e de grupo de idade). Os 5.570 municípios com dados têm valor, sem lacunas nem símbolos.
+
+- **Média (variável 13431), não mediana (13534).** A mediana se acumula em valores redondos (Campinas e Sorriso têm os dois R$ 1.500,00, exatamente), o que cria empates e separa mal municípios vizinhos no perfil. A média varia de forma contínua (de R$ 289 a R$ 4.300 por mês) e é o número que o IBGE destaca.
+- **Eixo economia, escala log**, como o PIB per capita. O peso é por eixo, então a renda divide o peso da economia com os outros cinco indicadores, sem pesar mais no total. Os dois medem coisas diferentes: o PIB per capita conta a produção no território (alto em municípios de mineração ou energia com pouca gente), e a renda conta o que chega às famílias.
+- **Ano:** 2022, o mesmo da população, então não mistura anos como o PIB per capita.
+- **Coluna logo depois do PIB per capita** na matriz e nas páginas. O hash do `indicadores.meta.json` mudou, o que invalida o cache antigo dos navegadores.
+
+Gêmeos com todos os eixos, antes (13) e depois (14), conferidos à mão:
+| Município | Antes | Depois |
+|---|---|---|
+| Campinas | Ribeirão Preto, Curitiba, Rio de Janeiro, Maringá, Goiânia | Ribeirão Preto, Curitiba, Rio de Janeiro, Goiânia, Maringá |
+| Belo Horizonte | Curitiba, Campinas, Vila Velha, Maringá, Recife | igual |
+| Sorriso (MT) | Nova Mutum, Primavera do Leste, Tangará da Serra, Lucas do Rio Verde, Balsas (MA) | os quatro primeiros, e Campo Novo do Parecis (MT) no lugar de Balsas |
+| Gramado (RS) | Cesário Lange (SP), São Roque (SP), Seropédica (RJ), Campos do Jordão (SP), Barra Velha (SC) | São Roque (SP), Frederico Westphalen (RS), Araranguá (SC), Campos do Jordão (SP), Rio do Sul (SC) |
+| Beneditinos (PI) | São Tomé (RN), Catunda (CE), Boa Nova (BA), Ipiranga do Piauí (PI), Arneiroz (CE) | os três primeiros, Arneiroz (CE), Camalaú (PB) |
+| Parintins (AM) | Manacapuru, Buriticupu, Tomé-Açu, Dom Eliseu, Itacoatiara | os mesmos, em outra ordem |
+
+As capitais e as cidades médias quase não mudam. Onde a renda separa municípios parecidos no resto do perfil, o resultado fica mais plausível: Gramado (renda per capita de R$ 2.623) deixa de ter como gêmeas Seropédica (R$ 1.181) e Cesário Lange (R$ 1.256), parecidas no PIB per capita e no resto do perfil, mas com menos da metade da renda; os novos gêmeos ficam entre R$ 2.258 e R$ 2.417.
 
 ### D3.7 (atualização): malha municipal fica em `qualidade=intermediaria`
 Decidido em 2026-10-20, depois de ver Minas Gerais nas duas qualidades lado a lado. A `minima` corta a geometria de MG de 897 KB para 211 KB e quase não muda o desenho no tamanho da página, mas fica angulosa com zoom, o que pesa no mapa de `/brasil/`. Fica a `intermediaria`. Custo aceito: `/uf/mg/` e outros estados grandes ficam abaixo de 90 em desempenho no Lighthouse do celular (85 em MG, D10.4). Isso está fora dos critérios do projeto, que pedem 90+ só na home e na página de município, e as duas passam.
