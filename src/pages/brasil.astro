@@ -1,0 +1,108 @@
+---
+import CompassRose from '../components/CompassRose.astro';
+import Sheet from '../layouts/Sheet.astro';
+import { municipios, ufs } from '../lib/data.ts';
+import { formatInteger } from '../lib/format.ts';
+import { INDICATORS } from '../lib/indicators.ts';
+
+const total = formatInteger(municipios.length);
+const options = INDICATORS.map((indicator) => ({ id: indicator.id, label: indicator.rotulo }));
+---
+
+<Sheet
+  title="Brasil inteiro por município: Brasil em Mapas"
+  description="O mapa dos 5.570 municípios brasileiros num só quadro, com zoom, colorido por qualquer indicador do IBGE."
+  back={{ href: '/', label: 'Brasil' }}
+>
+  <main class="atlas-page">
+    <div class="atlas">
+      <div class="atlas-main">
+        <div>
+          <h1 class="atlas-title">Brasil inteiro</h1>
+          <p class="atlas-lede">Os {total} municípios num só mapa. Aproxime para ver cada um; clique para abrir a página dele.</p>
+        </div>
+
+        <div class="brasil-load" data-brasil-load hidden>
+          <button type="button" class="button" data-brasil-start>Carregar o mapa</button>
+          <p class="source">Baixa as fronteiras dos municípios (cerca de 1 MB comprimido) só agora, para a página abrir leve.</p>
+        </div>
+        <p class="position-status" role="status" data-brasil-status></p>
+
+        <div class="brasil-stage" data-brasil-stage hidden>
+          <div class="brasil-tools">
+            <div class="field">
+              <label for="brasil-indicator">Indicador</label>
+              <select id="brasil-indicator" data-brasil-indicator>
+                {options.map((option) => <option value={option.id}>{option.label}</option>)}
+              </select>
+            </div>
+            <div class="position" data-picker="m">
+              <label for="brasil-find">Achar um município</label>
+              <input id="brasil-find" type="search" autocomplete="off" spellcheck="false" placeholder="Nome da cidade" aria-describedby="brasil-find-status" />
+              <p class="position-status" id="brasil-find-status" role="status" data-picker-status></p>
+              <ul class="position-results" data-picker-results></ul>
+            </div>
+          </div>
+
+          <div class="brasil-canvas-wrap">
+            <canvas
+              data-brasil-canvas
+              tabindex="0"
+              role="img"
+              aria-label="Mapa dos municípios do Brasil colorido pelo indicador escolhido"
+              aria-describedby="brasil-help"
+            ></canvas>
+            <div class="brasil-buttons">
+              <button type="button" class="button" data-zoom="in" aria-label="Aproximar">+</button>
+              <button type="button" class="button" data-zoom="out" aria-label="Afastar">−</button>
+              <button type="button" class="button" data-zoom="reset">Brasil inteiro</button>
+            </div>
+          </div>
+          <p class="source" id="brasil-help">
+            Arraste para mover, use a roda ou os botões para aproximar. Com o mapa em foco: setas movem, + e − aproximam, Enter abre o município
+            escolhido.
+          </p>
+
+          <div class="notes brasil-legend-inline">
+            <h2 data-brasil-legend-title>Legenda</h2>
+            <ul class="legend" data-brasil-legend></ul>
+          </div>
+
+          <p class="brasil-hover" data-brasil-hover aria-hidden="true"></p>
+          <div class="brasil-selected" data-brasil-selected role="status"></div>
+        </div>
+
+        <noscript>
+          <p class="callout">O mapa nacional é desenhado no navegador e precisa de JavaScript. Os mapas por estado abaixo funcionam sem ele.</p>
+        </noscript>
+
+        <section class="facts" aria-labelledby="brasil-estados">
+          <h2 id="brasil-estados">Os mesmos municípios, por estado</h2>
+          <p>
+            Cada estado tem um mapa próprio e uma tabela com todos os municípios, navegável por teclado e leitor de tela. Para a lista dos maiores e
+            dos menores em cada indicador, veja os <a href="/ranking/">rankings</a>.
+          </p>
+          <ul class="brasil-ufs">
+            {ufs.map((uf) => <li><a href={`/uf/${uf.sigla.toLowerCase()}/`}>{uf.nome}</a></li>)}
+          </ul>
+        </section>
+      </div>
+
+      <aside class="margin margin--sticky" aria-label="Legenda e notas">
+        <div class="rose"><CompassRose /></div>
+        <div class="notes">
+          <div class="brasil-legend-aside">
+            <h2 data-brasil-legend-title>Legenda</h2>
+            <ul class="legend" data-brasil-legend></ul>
+          </div>
+          <p class="source" data-brasil-source>Fonte: IBGE. Escolha um indicador para ver o ano de referência.</p>
+          <p class="source">As faixas são sete grupos com o mesmo número de municípios, calculados entre todos os que têm dado. “Sem dado” nunca é zero.</p>
+        </div>
+      </aside>
+    </div>
+  </main>
+</Sheet>
+
+<script>
+  import '../scripts/brasil.ts';
+</script>

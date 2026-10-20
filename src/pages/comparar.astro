@@ -1,0 +1,76 @@
+---
+import CompassRose from '../components/CompassRose.astro';
+import Sheet from '../layouts/Sheet.astro';
+import { INDICATORS } from '../lib/indicators.ts';
+
+const count = String(INDICATORS.length);
+const PICKERS = [
+  { key: 'a', label: 'Primeiro município' },
+  { key: 'b', label: 'Segundo município' },
+];
+---
+
+<Sheet
+  title="Comparar municípios: Brasil em Mapas"
+  description="Dois municípios brasileiros lado a lado em população, território, economia e infraestrutura, com dados do IBGE."
+  back={{ href: '/', label: 'Brasil' }}
+>
+  <main class="atlas-page">
+    <div class="atlas">
+      <div class="atlas-main">
+        <div>
+          <h1 class="atlas-title">Comparar</h1>
+          <p class="atlas-lede">Dois municípios lado a lado nos {count} indicadores, com a posição de cada um no Brasil.</p>
+        </div>
+
+        <noscript>
+          <p class="callout">
+            A comparação monta a tabela no seu navegador e precisa de JavaScript. Cada página de município mostra os mesmos números.
+          </p>
+        </noscript>
+
+        <form class="compare-form" data-compare-form hidden>
+          {
+            PICKERS.map((picker) => (
+              <div class="position" data-picker={picker.key}>
+                <label for={`compare-${picker.key}`}>{picker.label}</label>
+                <input
+                  id={`compare-${picker.key}`}
+                  type="search"
+                  autocomplete="off"
+                  spellcheck="false"
+                  placeholder="Nome da cidade"
+                  aria-describedby={`compare-status-${picker.key}`}
+                />
+                <p class="position-status" id={`compare-status-${picker.key}`} role="status" data-picker-status></p>
+                <ul class="position-results" data-picker-results></ul>
+              </div>
+            ))
+          }
+        </form>
+        <p class="position-status" role="status" data-compare-status></p>
+      </div>
+
+      <aside class="margin margin--sticky margin--beside-results" aria-label="Notas">
+        <div class="rose"><CompassRose /></div>
+        <div class="notes">
+          <h2>Notas</h2>
+          <p>Fonte: IBGE. O ano de cada indicador está em <a href="/sobre/">Sobre os dados</a>.</p>
+          <p>A posição compara o município com todos os que têm valor naquele indicador: 1º é o maior valor, não o “melhor”.</p>
+          <p>A distância é a mesma da página do <a href="/gemeo/">município gêmeo</a>, com os quatro eixos ligados. Quanto menor, mais parecidos.</p>
+          <p>Dado ausente aparece como “sem dado”, nunca como zero.</p>
+        </div>
+      </aside>
+
+      <section class="compare-out" data-compare-out aria-live="polite" hidden>
+        <h2 data-compare-title></h2>
+        <p class="source" data-compare-note></p>
+        <div data-compare-tables></div>
+      </section>
+    </div>
+  </main>
+</Sheet>
+
+<script>
+  import '../scripts/compare.ts';
+</script>

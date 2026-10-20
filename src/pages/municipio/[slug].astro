@@ -1,0 +1,194 @@
+---
+import CompassRose from '../../components/CompassRose.astro';
+import Sheet from '../../layouts/Sheet.astro';
+import {
+  matrix,
+  municipioRow,
+  municipios,
+  nomes,
+  ranksOf,
+  ufMunicipiosFeatures,
+  ufOf,
+  ufOutline,
+} from '../../lib/data.ts';
+import { formatIndicatorValue, formatInteger } from '../../lib/format.ts';
+import { capitalizeName, formatCoordinates, formatRank } from '../../lib/format-place.ts';
+import { projectWithin } from '../../lib/geo.ts';
+import { INDICATORS, type Eixo } from '../../lib/indicators.ts';
+import { indicatorSlug } from '../../lib/ranking.ts';
+
+export function getStaticPaths() {
+  return municipios.map((municipio) => ({ params: { slug: municipio.slug }, props: { municipio } }));
+}
+
+const { municipio } = Astro.props;
+const uf = ufOf(municipio);
+const row = municipioRow.get(municipio.codigo) ?? 0;
+const ranks = ranksOf(municipio);
+
+// One projection fitted to the state outline places the municipality exactly where it belongs.
+const outline = ufOutline(uf.codigo);
+const shape = ufMunicipiosFeatures(uf.sigla).find((feature) => feature.codigo === municipio.codigo);
+const locator = outline ? projectWithin(outline, shape ? [shape] : [], { width: 520, padding: 10, kind: 'estado' }) : null;
+const here = locator?.items[0];
+
+const EIXOS: { id: Eixo; titulo: string }[] = [
+  { id: 'demografia', titulo: 'Demografia' },
+  { id: 'territorio', titulo: 'Território' },
+  { id: 'economia', titulo: 'Economia' },
+  { id: 'infraestrutura', titulo: 'Infraestrutura' },
+];
+
+const groups = EIXOS.map((eixo) => ({
+  ...eixo,
+  rows: INDICATORS.map((indicator, column) => ({ indicator, column }))
+    .filter(({ indicator }) => indicator.eixo === eixo.id)
+    .map(({ indicator, column }) => ({
+      id: indicator.id,
+      slug: indicatorSlug(indicator.id),
+      rotulo: indicator.rotulo,
+      ano: indicator.ano,
+      fonte: indicator.fonte,
+      value: formatIndicatorValue(matrix.get(row, column), indicator.unidade),
+      brasil: formatRank(ranks.brasil[column] ?? null),
+      estado: formatRank(ranks.uf[column] ?? null),
+    })),
+}));
+
+const nomesDaCidade = nomes.porMunicipio[municipio.codigo] ?? [];
+const title = `${municipio.nome} (${municipio.uf}): Brasil em Mapas`;
+const description = municipio.temDados
+  ? `${municipio.nome}, ${uf.nome}: população, economia, território e infraestrutura com dados públicos do IBGE.`
+  : `${municipio.nome}, ${uf.nome}: município sem dados nos indicadores do IBGE usados aqui.`;
+const total = formatInteger(municipios.length);
+---
+
+<Sheet title={title} description={description} image={`/og/uf/${uf.sigla.toLowerCase()}.png`} back={{ href: `/uf/${uf.sigla.toLowerCase()}/`, label: uf.nome }}>
+  <main class="atlas-page">
+    <!-- Only this line is indexed by the search, so a name typed in the search finds the city, not people called Maria. -->
+    <span
+      class="visually-hidden"
+      aria-hidden="true"
+      data-pagefind-body
+      data-pagefind-meta={`nome:${municipio.nome}`}
+    >{municipio.nome} {uf.nome} {municipio.uf}</span>
+    <span hidden data-pagefind-meta={`uf:${municipio.uf}`}></span>
+
+    <div class="atlas">
+      <div class="atlas-main">
+        <div>
+          <h1 class="atlas-title">{municipio.nome}</h1>
+          <p class="atlas-lede">{uf.nome}, região {municipio.regiao}. Região imediata de {municipio.regiaoImediata}.</p>
+        </div>
+
+        {
+          locator && (
+            <figure class="locator">
+              <svg viewBox={locator.viewBox} role="img" aria-label={`Posição de ${municipio.nome} dentro de ${uf.nome}`}>
+                <path class="outline" d={locator.context.d}></path>
+                {here && <path class="here" d={here.d}></path>}
+                {
+                  here && (
+                    <g class="fix" aria-hidden="true">
+                      <circle cx={here.cx} cy={here.cy} r="9"></circle>
+                      <path d={`M${String(here.cx - 15)} ${String(here.cy)}H${String(here.cx + 15)}M${String(here.cx)} ${String(here.cy - 15)}V${String(here.cy + 15)}`}></path>
+                    </g>
+                  )
+                }
+              </svg>
+              <figcaption>
+                Posição aproximada: <span class="sounding">{formatCoordinates(municipio.lat, municipio.lon)}</span>.
+                {!here && ' Este município não tem forma na malha do IBGE.'}
+              </figcaption>
+            </figure>
+          )
+        }
+
+        {
+          !municipio.temDados && (
+            <p class="callout">
+              O IBGE publica este município, mas não tem os indicadores usados aqui (foi criado depois do Censo de 2022).
+              Por isso todos os valores aparecem como “sem dado”.
+            </p>
+          )
+        }
+
+        {
+          groups.map((group) => (
+            <section class="facts" aria-labelledby={`eixo-${group.id}`}>
+              <h2 id={`eixo-${group.id}`}>{group.titulo}</h2>
+              <div class="table-wrap" role="region" aria-label={`${group.titulo} de ${municipio.nome}`} tabindex="0">
+                <table class="atlas-table">
+                  <caption>{group.titulo} de {municipio.nome}.</caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">Indicador</th>
+                      <th scope="col" class="num">Valor</th>
+                      <th scope="col" class="num">No Brasil</th>
+                      <th scope="col" class="num">Em {uf.sigla}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {group.rows.map((item) => (
+                      <tr>
+                        <th scope="row">
+                          <a href={`/ranking/${item.slug}/`}>{item.rotulo}</a>
+                          <span class="year">{item.fonte}, ano {item.ano}</span>
+                        </th>
+                        <td class="num sounding" data-label="Valor">{item.value}</td>
+                        <td class="num sounding" data-label="No Brasil">{item.brasil}</td>
+                        <td class="num sounding" data-label={`Em ${uf.sigla}`}>{item.estado}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          ))
+        }
+
+        <section class="facts" aria-labelledby="nomes-titulo">
+          <h2 id="nomes-titulo">Nomes mais comuns</h2>
+          {
+            nomesDaCidade.length > 0 ? (
+              <>
+                <p class="source">
+                  Fonte: IBGE, Censo 2010. Pessoas com cada nome em {municipio.nome}; a grafia é a do Censo, sem acentos.
+                </p>
+                <ol class="names">
+                  {nomesDaCidade.map((nome) => (
+                    <li>
+                      <span>{capitalizeName(nome.nome)}</span>
+                      <span class="sounding">{formatInteger(nome.frequencia)}</span>
+                    </li>
+                  ))}
+                </ol>
+              </>
+            ) : (
+              <p>
+                <span class="sounding">sem dado</span>. O IBGE não publica nomes para {municipio.nome} no Censo 2010, porque o município
+                foi criado depois.
+              </p>
+            )
+          }
+        </section>
+      </div>
+
+      <aside class="margin margin--sticky" aria-label="Notas">
+        <div class="rose"><CompassRose /></div>
+        <div class="notes">
+          <h2>Notas</h2>
+          <p>Fonte: IBGE. Cada indicador traz a tabela e o ano de referência; os anos variam entre indicadores.</p>
+          <p>
+            A posição compara {municipio.nome} com os {total} municípios do cadastro que têm dado naquele indicador: 1º é o maior valor,
+            não o “melhor”.
+          </p>
+          <p>Dado ausente aparece como “sem dado”, nunca como zero.</p>
+          <p><a href={`/uf/${uf.sigla.toLowerCase()}/`}>Ver o mapa de {uf.nome}</a></p>
+          {municipio.temDados && <p><a href={`/gemeo/?m=${municipio.slug}`}>Ver os municípios gêmeos de {municipio.nome}</a></p>}
+          <p><a href={`/comparar/?a=${municipio.slug}`}>Comparar {municipio.nome} com outro município</a></p>
+        </div>
+      </aside>
+    </div>
+  </main>
+</Sheet>

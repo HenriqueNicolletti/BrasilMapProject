@@ -1,0 +1,145 @@
+---
+import ChoroplethScript from '../../components/ChoroplethScript.astro';
+import DataTable from '../../components/DataTable.astro';
+import MapMargin from '../../components/MapMargin.astro';
+import MapPlate from '../../components/MapPlate.astro';
+import binUrl from '../../data/indicadores.bin?url';
+import Sheet from '../../layouts/Sheet.astro';
+import { classifyItems } from '../../lib/choropleth.ts';
+import { matrix, meta, municipioRow, municipios, ufMunicipiosMesh, ufs } from '../../lib/data.ts';
+import { formatIndicatorValue, formatInteger } from '../../lib/format.ts';
+import { projectFeatures, topologyFeatures } from '../../lib/geo.ts';
+import { itemHref } from '../../lib/map-data.ts';
+import { INDICATORS } from '../../lib/indicators.ts';
+import type { MapData, MapIndicator } from '../../lib/map-data.ts';
+import { legendHtml, rowsHtml } from '../../lib/render.ts';
+
+export function getStaticPaths() {
+  return ufs.map((uf) => ({ params: { sigla: uf.sigla.toLowerCase() }, props: { uf } }));
+}
+
+const { uf } = Astro.props;
+
+// Every municipality of the state is listed and in the table; only those the IBGE mesh has get a shape.
+const doEstado = municipios.filter((municipio) => municipio.ufCodigo === uf.codigo);
+const itens = doEstado.map((municipio) => ({
+  codigo: municipio.codigo,
+  nome: municipio.nome,
+  slug: municipio.slug,
+  row: municipioRow.get(municipio.codigo),
+}));
+
+const projected = projectFeatures(topologyFeatures(ufMunicipiosMesh(uf.sigla)), {
+  width: 800,
+  height: 800,
+  padding: 10,
+  kind: 'estado',
+  fit: 'content',
+});
+
+const indicadores: MapIndicator[] = INDICATORS.map((def, coluna) => {
+  const indicador: MapIndicator = { id: def.id, rotulo: def.rotulo, unidade: def.unidade, ano: def.ano, fonte: def.fonte, coluna };
+  // The default indicator ships its values, so the page works without loading the matrix.
+  if (def.id === 'pop') indicador.valores = itens.map((item) => (item.row === undefined ? null : matrix.get(item.row, coluna)));
+  return indicador;
+});
+const padrao = indicadores[0] as MapIndicator;
+
+const model = classifyItems(
+  itens.map((item, index) => ({ codigo: item.codigo, nome: item.nome, value: padrao.valores?.[index] ?? null })),
+  padrao.unidade,
+);
+const byCode = new Map(model.items.map((item) => [item.codigo, item]));
+
+const plateItems = projected.items.map((shape) => {
+  const item = byCode.get(shape.codigo);
+  if (!item) throw new Error(`The ${uf.sigla} mesh has municipality ${shape.codigo}, which is not in municipios.json`);
+  return { ...shape, nome: item.nome, step: item.step, valueText: item.valueText };
+});
+
+const data: MapData = {
+  escopo: `dos municípios de ${uf.nome}`,
+  binUrl,
+  linhas: meta.linhas,
+  colunas: meta.colunas,
+  indicadores,
+  itens,
+  padrao: padrao.id,
+  hrefBase: '/municipio/',
+};
+
+const rows = rowsHtml(
+  model.items
+    .map((item, index) => ({
+      codigo: item.codigo,
+      nome: item.nome,
+      valueText: item.valueText,
+      href: itemHref(data, itens[index] as (typeof itens)[number]),
+    }))
+    .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')),
+);
+
+const payload = JSON.stringify(data).replace(/</g, '\\u003c');
+const total = formatInteger(itens.length);
+const resumo = `${formatIndicatorValue(uf.populacao, 'pessoas')} habitantes, ${formatIndicatorValue(uf.area, 'km²')} km² e ${formatIndicatorValue(uf.densidade, 'hab/km²')} hab/km². Fonte: IBGE, Censo 2022.`;
+
+// A municipality the IBGE publishes without data has no shape on the map; say so, and where to find it.
+const semForma = doEstado.filter((municipio) => municipio.lat === null);
+const semFormaNote =
+  semForma.length === 0
+    ? ''
+    : ` ${semForma.map((municipio) => municipio.nome).join(', ')} ${semForma.length === 1 ? 'não tem' : 'não têm'} dado nem forma no mapa; ${semForma.length === 1 ? 'aparece' : 'aparecem'} na tabela como “sem dado”.`;
+---
+
+<Sheet
+  title={`${uf.nome}: Brasil em Mapas`}
+  description={`Mapa dos ${total} municípios de ${uf.nome} com dados públicos do IBGE.`}
+  back={{ href: '/', label: 'Brasil' }}
+  image={`/og/uf/${uf.sigla.toLowerCase()}.png`}
+>
+  <main class="atlas-page">
+    <span
+      class="visually-hidden"
+      aria-hidden="true"
+      data-pagefind-body
+      data-pagefind-meta={`nome:${uf.nome}`}
+    >{uf.nome} {uf.sigla}</span>
+    <span hidden data-pagefind-meta={`uf:${uf.sigla}`}></span>
+    <span hidden data-pagefind-meta="tipo:estado"></span>
+    <div class="atlas">
+      <div class="atlas-main">
+        <div>
+          <h1 class="atlas-title">{uf.nome}</h1>
+          <p class="atlas-lede">{total} municípios.</p>
+          <p class="source">{resumo}</p>
+        </div>
+        <MapPlate
+          viewBox={projected.viewBox}
+          label={`Mapa dos municípios de ${uf.nome}. Os valores de cada município estão na tabela abaixo.`}
+          items={plateItems}
+        />
+        <a class="skip" href="#tabela">Ver os mesmos dados em tabela</a>
+      </div>
+      <MapMargin
+        indicators={indicadores.map((indicador) => ({ id: indicador.id, label: `${indicador.rotulo} (${indicador.unidade})` }))}
+        defaultId={padrao.id}
+        legend={legendHtml(model.legend, model.hasNoData)}
+        legendTitle="Legenda"
+        source={`Fonte: IBGE, ${padrao.fonte}. Ano de referência: ${padrao.ano}.`}
+        scopeNote={`Classes calculadas entre os municípios de ${uf.nome}: as cores não são comparáveis entre estados. Cada faixa inclui o valor inicial e exclui o final, exceto a última.${semFormaNote}`}
+      />
+    </div>
+
+    <DataTable
+      title="Os mesmos dados em tabela"
+      intro={`Todos os municípios de ${uf.nome}, em ordem alfabética. Cada nome leva à página do município; clique no título de uma coluna para ordenar.`}
+      nameHead="Município"
+      valueHead={padrao.rotulo}
+      caption={`${padrao.rotulo} (${padrao.unidade}), ${data.escopo}.`}
+      rows={rows}
+    />
+  </main>
+
+  <script type="application/json" id="choropleth-data" set:html={payload}></script>
+  <ChoroplethScript />
+</Sheet>

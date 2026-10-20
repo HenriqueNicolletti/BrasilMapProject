@@ -1,0 +1,102 @@
+---
+import Sheet from '../layouts/Sheet.astro';
+import { formatInteger } from '../lib/format.ts';
+import { meta, municipios } from '../lib/data.ts';
+import type { Eixo } from '../lib/indicators.ts';
+
+const EIXOS: Record<Eixo, string> = {
+  demografia: 'Demografia',
+  territorio: 'Território',
+  economia: 'Economia',
+  infraestrutura: 'Infraestrutura',
+};
+
+const comDados = municipios.filter((municipio) => municipio.temDados).length;
+const total = formatInteger(municipios.length);
+---
+
+<Sheet
+  title="Sobre os dados: Brasil em Mapas"
+  description="De onde vêm os números do Brasil em Mapas, que ano cada um representa e como ler a ausência de dado."
+  back={{ href: '/', label: 'Brasil' }}
+>
+  <main class="atlas-page prose">
+    <h1 class="atlas-title">Sobre os dados</h1>
+
+    <p>
+      Todos os números deste atlas vêm de serviços públicos do IBGE. Um script baixa os dados, confere o formato de cada resposta e só
+      então os grava no site. O navegador de quem visita nunca consulta o IBGE: o que você vê foi gravado quando o site foi construído.
+    </p>
+
+    <h2>Indicadores</h2>
+    <p>
+      O cadastro do IBGE lista {total} municípios; {formatInteger(comDados)} têm os indicadores abaixo. A coluna “Municípios” diz
+      quantos têm valor em cada um.
+    </p>
+    <div class="table-wrap" role="region" aria-label="Indicadores, ano de referência e cobertura" tabindex="0">
+      <table class="atlas-table">
+        <caption>Indicadores, ano de referência e cobertura.</caption>
+        <thead>
+          <tr>
+            <th scope="col">Indicador</th>
+            <th scope="col">Eixo</th>
+            <th scope="col">Ano</th>
+            <th scope="col">Fonte</th>
+            <th scope="col" class="num">Municípios</th>
+          </tr>
+        </thead>
+        <tbody>
+          {
+            meta.indicadores.map((indicador) => (
+              <tr>
+                <th scope="row">{indicador.rotulo}</th>
+                <td>{EIXOS[indicador.eixo]}</td>
+                <td>{indicador.ano}</td>
+                <td>IBGE, {indicador.fonte}</td>
+                <td class="num sounding">{formatInteger(indicador.cobertura)}</td>
+              </tr>
+            ))
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <h2>Como ler os números</h2>
+    <ul>
+      <li>
+        <strong>“Sem dado”</strong> quer dizer que o IBGE não publica aquele valor para o município. Nunca é zero e nunca é estimativa
+        nossa.
+      </li>
+      <li>
+        <strong>Zero é zero.</strong> Quando o IBGE informa que algo não existe num município (por exemplo, nenhum domicílio com esgoto
+        em rede), o valor aparece como zero, porque esse é o dado.
+      </li>
+      <li>
+        <strong>Os anos variam.</strong> A população e a maior parte dos indicadores são do Censo 2022; o PIB e a composição da economia
+        são de 2021; os nomes são do Censo 2010. O PIB per capita divide o PIB de 2021 pela população de 2022.
+      </li>
+      <li>
+        <strong>Percentuais são calculados por nós</strong> a partir de contagens do IBGE (por exemplo, a população urbana dividida pela
+        população total). A fórmula está na coluna “Fonte”.
+      </li>
+      <li>
+        <strong>Posição</strong> compara um município com todos os outros que têm valor naquele indicador. O 1º é o maior valor, não o
+        “melhor”: a cidade mais velha em idade mediana está em 1º.
+      </li>
+      <li>
+        <strong>Cores do mapa</strong> são sete faixas com o mesmo número de municípios em cada uma (quantis). Num mapa de estado, as
+        faixas são calculadas só entre os municípios daquele estado, então as cores de estados diferentes não são comparáveis.
+      </li>
+    </ul>
+
+    <h2>Limites</h2>
+    <ul>
+      <li>Boa Esperança do Norte (MT) foi criada depois do Censo 2022. Está no cadastro, mas não tem indicadores nem forma no mapa.</li>
+      <li>
+        Seis municípios criados depois de 2010 não têm nomes no Censo 2010: Mojuí dos Campos, Pescaria Brava, Balneário Rincão,
+        Pinto Bandeira, Paraíso das Águas e Boa Esperança do Norte.
+      </li>
+      <li>Os contornos vêm da malha do IBGE em qualidade intermediária, o que simplifica as fronteiras.</li>
+    </ul>
+  </main>
+</Sheet>

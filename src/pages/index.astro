@@ -1,0 +1,199 @@
+---
+import ChoroplethScript from '../components/ChoroplethScript.astro';
+import DataTable from '../components/DataTable.astro';
+import MapMargin from '../components/MapMargin.astro';
+import MapPlate from '../components/MapPlate.astro';
+import PositionSearch from '../components/PositionSearch.astro';
+import Sheet from '../layouts/Sheet.astro';
+import { classifyItems } from '../lib/choropleth.ts';
+import { brasilUfMesh, matrix, municipios, ufs } from '../lib/data.ts';
+import { formatInteger } from '../lib/format.ts';
+import { projectFeatures, topologyFeatures } from '../lib/geo.ts';
+import { INDICATORS, type Eixo } from '../lib/indicators.ts';
+import type { MapData, MapIndicator } from '../lib/map-data.ts';
+import { legendHtml, rowsHtml } from '../lib/render.ts';
+import { explainPair, findTwins, normalizeMatrix } from '../lib/twin.ts';
+import { bothAtLimit, closestRelative, describeTwin } from '../lib/twin-text.ts';
+
+// State-level figures come straight from IBGE table 4714 (population, area, density).
+const ufByCode = new Map(ufs.map((uf) => [uf.codigo, uf]));
+const projected = projectFeatures(topologyFeatures(brasilUfMesh()), {
+  width: 760,
+  height: 760,
+  padding: 14,
+  kind: 'brasil',
+  fit: 'content',
+});
+const itens = projected.items.map((shape) => {
+  const uf = ufByCode.get(shape.codigo);
+  if (!uf) throw new Error(`The country mesh has state ${shape.codigo}, which is not in ufs.json`);
+  return { codigo: uf.codigo, nome: uf.nome, sigla: uf.sigla };
+});
+
+const MIN_SOUNDING_AREA = 3500; // SVG units squared in the 760-wide viewBox
+
+const figures = { pop: 'populacao', area: 'area', dens: 'densidade' } as const;
+const indicadores: MapIndicator[] = (Object.keys(figures) as (keyof typeof figures)[]).map((id) => {
+  const def = INDICATORS.find((indicator) => indicator.id === id);
+  if (!def) throw new Error(`Indicator ${id} is not defined`);
+  return {
+    id,
+    rotulo: def.rotulo,
+    unidade: def.unidade,
+    ano: def.ano,
+    fonte: def.fonte,
+    valores: itens.map((item) => ufByCode.get(item.codigo)?.[figures[id]] ?? null),
+  };
+});
+const padrao = indicadores[0] as MapIndicator;
+
+const model = classifyItems(
+  itens.map((item, index) => ({ codigo: item.codigo, nome: item.nome, value: padrao.valores?.[index] ?? null })),
+  padrao.unidade,
+);
+const hrefs = Object.fromEntries(itens.map((item) => [item.codigo, `/uf/${item.sigla.toLowerCase()}/`]));
+
+const plateItems = projected.items.map((shape, index) => {
+  const item = itens[index] as (typeof itens)[number];
+  const classified = model.items[index] as (typeof model.items)[number];
+  return { ...shape, nome: item.nome, step: classified.step, valueText: classified.valueText, // Only shapes big enough carry the figure; small ones (the Northeast coast) keep just the abbreviation.
+    compact: shape.area >= MIN_SOUNDING_AREA ? classified.compactText : undefined, href: hrefs[item.codigo], tag: item.sigla };
+});
+
+const rows = rowsHtml(
+  model.items
+    .map((item) => ({ codigo: item.codigo, nome: item.nome, valueText: item.valueText, href: hrefs[item.codigo] }))
+    .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')),
+);
+
+const data: MapData = {
+  escopo: 'por estado',
+  indicadores,
+  itens: itens.map(({ codigo, nome }) => ({ codigo, nome })),
+  padrao: padrao.id,
+  hrefs,
+};
+const payload = JSON.stringify(data).replace(/</g, '\\u003c');
+
+// Three twins measured here, at build time, with the same code and settings as /gemeo/ (all four axes on).
+const ALL_AXES = new Set<Eixo>(['demografia', 'territorio', 'economia', 'infraestrutura']);
+const EXAMPLES = ['sorriso-mt', 'belo-horizonte-mg', 'campos-do-jordao-sp'];
+const normalized = normalizeMatrix(matrix.rows, INDICATORS, matrix.get);
+const distance = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const shownCols = new Set<number>(); // each pair prints a different resemblance
+const measured = EXAMPLES.flatMap((slug) => {
+  const a = municipios.findIndex((municipio) => municipio.slug === slug);
+  const result = a < 0 ? null : findTwins(normalized, INDICATORS, a, { axes: ALL_AXES, limit: 1 });
+  const twin = result?.status === 'ok' ? result.twins[0] : undefined;
+  const first = municipios[a];
+  const second = twin ? municipios[twin.row] : undefined;
+  if (!twin || !first || !second) return [];
+  return [{ a, b: twin.row, first, second, measured: twin.distance }];
+}).sort((x, y) => x.measured - y.measured);
+const pairs = measured.map((pair) => {
+  // Of the five closest indicators (in z-scores), print the one also close in plain numbers, leaving out
+  // shares both at 0% or 100% and any resemblance an earlier pair already printed.
+  const valueA = (col: number) => matrix.get(pair.a, col);
+  const valueB = (col: number) => matrix.get(pair.b, col);
+  const closest = explainPair(normalized, INDICATORS, pair.a, pair.b, ALL_AXES, 5).similar;
+  const skip = (col: number, x: number, y: number) => shownCols.has(col) || bothAtLimit(INDICATORS[col]?.unidade ?? '', x, y);
+  const shown = closestRelative(closest.map((item) => item.col), valueA, valueB, skip);
+  if (shown !== null) shownCols.add(shown);
+  const similar = closest.filter((item) => item.col === shown);
+  const sentences = describeTwin({ similar, different: null }, INDICATORS, valueA, valueB);
+  return { ...pair, distance: distance.format(pair.measured), similar: sentences.similar[0] ?? '' };
+});
+---
+
+<Sheet title="Brasil em Mapas" description="Atlas interativo dos municípios brasileiros com dados públicos do IBGE.">
+  <main class="atlas-page">
+    <div class="atlas">
+      <div class="atlas-main">
+        <div class="atlas-head">
+          <div>
+            <h1 class="atlas-title">Brasil em Mapas</h1>
+            <p class="atlas-lede">Atlas dos municípios brasileiros, com dados do IBGE.</p>
+          </div>
+          <PositionSearch />
+        </div>
+        <MapPlate
+          viewBox={projected.viewBox}
+          label="Mapa do Brasil dividido em estados. Escolha um estado para ver seus municípios; os mesmos valores estão na tabela abaixo."
+          items={plateItems}
+        />
+        <a class="skip" href="#tabela">Ver os mesmos dados em tabela</a>
+      </div>
+      <MapMargin
+        indicators={indicadores.map((indicador) => ({ id: indicador.id, label: `${indicador.rotulo} (${indicador.unidade})` }))}
+        defaultId={padrao.id}
+        legend={legendHtml(model.legend, model.hasNoData)}
+        legendTitle="Legenda"
+        source={`Fonte: IBGE, ${padrao.fonte}. Ano de referência: ${padrao.ano}.`}
+        scopeNote="Classes calculadas entre os 27 estados. Cada faixa inclui o valor inicial e exclui o final, exceto a última."
+      >
+        <section class="twin-entry" slot="lead" aria-labelledby="gemeo-titulo">
+          <h2 id="gemeo-titulo">Município gêmeo</h2>
+          <p>
+            Escolha uma cidade e veja as que mais se parecem com ela em população, território, economia e infraestrutura, entre os
+            {' '}{formatInteger(municipios.length)} do país.
+          </p>
+          <a class="twin-entry-action" href="/gemeo/">Achar o gêmeo da sua cidade</a>
+        </section>
+      </MapMargin>
+
+      {
+        pairs.length > 0 && (
+          <section class="bearings" aria-labelledby="pares-titulo">
+            <h2 id="pares-titulo">Gêmeos medidos</h2>
+            <p class="bearings-intro">
+              Cada par saiu do mesmo cálculo da página do gêmeo, com os quatro eixos ligados: {INDICATORS.length} indicadores do IBGE,
+              distância 0 seria idêntico.
+            </p>
+            <ol class="bearings-list">
+              {pairs.map((pair) => (
+                <li>
+                  <a class="bearing-pair" href={`/comparar/?a=${pair.first.slug}&b=${pair.second.slug}`}>
+                    <span class="bearing-end">
+                      {pair.first.nome} <span class="bearing-uf">{pair.first.uf}</span>
+                    </span>
+                    <span class="bearing-line" aria-hidden="true">
+                      <span class="sounding">{pair.distance}</span>
+                    </span>
+                    <span class="bearing-end">
+                      {pair.second.nome} <span class="bearing-uf">{pair.second.uf}</span>
+                    </span>
+                    <span class="visually-hidden">, distância {pair.distance}. Comparar os dois.</span>
+                  </a>
+                  <p class="bearing-note">Parecem em {pair.similar}</p>
+                </li>
+              ))}
+            </ol>
+          </section>
+        )
+      }
+
+      <nav class="charts" aria-label="Outras cartas">
+        <h2>Outras cartas</h2>
+        <ul>
+          <li><a href="/brasil/">Brasil inteiro</a> <span>os municípios num só mapa, com zoom</span></li>
+          <li><a href="/comparar/">Comparar</a> <span>duas cidades lado a lado</span></li>
+          <li><a href="/ranking/">Rankings</a> <span>maiores e menores em cada indicador</span></li>
+          <li><a href="/sobre/">Sobre os dados</a> <span>fontes, anos e o que é “sem dado”</span></li>
+        </ul>
+      </nav>
+    </div>
+
+    <DataTable
+      title="Os mesmos dados em tabela"
+      intro="Cada estado leva à página dos seus municípios."
+      nameHead="Estado"
+      valueHead={padrao.rotulo}
+      caption={`${padrao.rotulo} (${padrao.unidade}), por estado.`}
+      rows={rows}
+      showAll
+    />
+  </main>
+
+  <script type="application/json" id="choropleth-data" set:html={payload}></script>
+  <ChoroplethScript />
+</Sheet>

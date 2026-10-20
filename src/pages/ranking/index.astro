@@ -1,0 +1,37 @@
+---
+import Sheet from '../../layouts/Sheet.astro';
+import { INDICATORS, type Eixo } from '../../lib/indicators.ts';
+import { indicatorSlug } from '../../lib/ranking.ts';
+
+const EIXOS: { id: Eixo; titulo: string }[] = [
+  { id: 'demografia', titulo: 'Demografia' },
+  { id: 'territorio', titulo: 'Território' },
+  { id: 'economia', titulo: 'Economia' },
+  { id: 'infraestrutura', titulo: 'Infraestrutura' },
+];
+---
+
+<Sheet
+  title="Rankings: Brasil em Mapas"
+  description="Os maiores e menores municípios do Brasil em cada indicador do IBGE: população, território, economia e infraestrutura."
+  back={{ href: '/', label: 'Brasil' }}
+>
+  <main class="atlas-page prose">
+    <h1 class="atlas-title">Rankings</h1>
+    <p>Escolha um indicador para ver os 25 maiores e os 25 menores valores entre os municípios. Fonte: IBGE.</p>
+    {
+      EIXOS.map((eixo) => (
+        <section>
+          <h2>{eixo.titulo}</h2>
+          <ul>
+            {INDICATORS.filter((indicator) => indicator.eixo === eixo.id).map((indicator) => (
+              <li>
+                <a href={`/ranking/${indicatorSlug(indicator.id)}/`}>{indicator.rotulo}</a> <span class="year">ano {indicator.ano}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))
+    }
+  </main>
+</Sheet>

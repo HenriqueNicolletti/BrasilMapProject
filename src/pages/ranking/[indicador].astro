@@ -1,0 +1,100 @@
+---
+import CompassRose from '../../components/CompassRose.astro';
+import Sheet from '../../layouts/Sheet.astro';
+import { matrix, meta, municipios } from '../../lib/data.ts';
+import { formatIndicatorValue, formatInteger } from '../../lib/format.ts';
+import { INDICATORS } from '../../lib/indicators.ts';
+import { extremes, indicatorSlug, rankColumn, type RankedEntry } from '../../lib/ranking.ts';
+
+const LIST_SIZE = 25;
+
+export function getStaticPaths() {
+  return INDICATORS.map((indicator, column) => ({
+    params: { indicador: indicatorSlug(indicator.id) },
+    props: { indicator, column },
+  }));
+}
+
+const { indicator, column } = Astro.props;
+const ranked = rankColumn(municipios.map((_, row) => matrix.get(row, column)));
+const { top, bottom, total } = extremes(ranked, LIST_SIZE);
+const semDado = municipios.length - total;
+const eixo = { demografia: 'Demografia', territorio: 'Território', economia: 'Economia', infraestrutura: 'Infraestrutura' }[indicator.eixo];
+const coverage = meta.indicadores.find((item) => item.id === indicator.id)?.cobertura ?? total;
+
+const lists = [
+  { id: 'maiores', titulo: `${String(LIST_SIZE)} maiores valores`, entries: top },
+  { id: 'menores', titulo: `${String(LIST_SIZE)} menores valores`, entries: bottom },
+];
+
+function line(entry: RankedEntry) {
+  const municipio = municipios[entry.row];
+  if (!municipio) throw new Error(`Row ${String(entry.row)} is not in municipios.json`);
+  return { municipio, posicao: formatInteger(entry.posicao), value: formatIndicatorValue(entry.value, indicator.unidade) };
+}
+---
+
+<Sheet
+  title={`${indicator.rotulo}: ranking dos municípios: Brasil em Mapas`}
+  description={`Os municípios brasileiros com maior e menor ${indicator.rotulo.toLowerCase()}, com dados do IBGE (${indicator.ano}).`}
+  back={{ href: '/ranking/', label: 'Rankings' }}
+>
+  <main class="atlas-page">
+    <div class="atlas">
+      <div class="atlas-main">
+        <div>
+          <h1 class="atlas-title">{indicator.rotulo}</h1>
+          <p class="atlas-lede">{eixo}. Ranking de {formatInteger(total)} municípios, ano {indicator.ano}.</p>
+        </div>
+
+        {
+          lists.map((list) => (
+            <section class="facts" aria-labelledby={`rank-${list.id}`}>
+              <h2 id={`rank-${list.id}`}>{list.titulo}</h2>
+              <div class="table-wrap" role="region" aria-label={list.titulo} tabindex="0">
+                <table class="atlas-table rank-table">
+                  <caption>{list.titulo} de {indicator.rotulo.toLowerCase()}.</caption>
+                  <thead>
+                    <tr>
+                      <th scope="col" class="num">Posição</th>
+                      <th scope="col">Município</th>
+                      <th scope="col" class="num">Valor</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {list.entries.map((entry) => {
+                      const item = line(entry);
+                      return (
+                        <tr>
+                          <td class="num sounding" data-label="Posição">{item.posicao}º</td>
+                          <th scope="row">
+                            <a href={`/municipio/${item.municipio.slug}/`}>{item.municipio.nome}</a> <span class="year">{item.municipio.uf}</span>
+                          </th>
+                          <td class="num sounding" data-label="Valor">{item.value}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          ))
+        }
+      </div>
+
+      <aside class="margin margin--sticky" aria-label="Notas">
+        <div class="rose"><CompassRose /></div>
+        <div class="notes">
+          <h2>Notas</h2>
+          <p>Fonte: IBGE, {indicator.fonte}. Ano de referência: {indicator.ano}.</p>
+          <p>
+            {formatInteger(coverage)} de {formatInteger(municipios.length)} municípios têm valor neste indicador; os {formatInteger(semDado)} restantes
+            aparecem como “sem dado” e ficam fora do ranking, nunca como zero.
+          </p>
+          <p>O 1º é o maior valor, não o “melhor”. Municípios com o mesmo valor dividem a posição.</p>
+          <p><a href="/ranking/">Todos os rankings</a></p>
+        </div>
+      </aside>
+    </div>
+  </main>
+</Sheet>

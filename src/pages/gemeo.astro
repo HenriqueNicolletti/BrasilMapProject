@@ -1,0 +1,90 @@
+---
+import CompassRose from '../components/CompassRose.astro';
+import Sheet from '../layouts/Sheet.astro';
+import { municipios } from '../lib/data.ts';
+import { formatInteger } from '../lib/format.ts';
+import { INDICATORS } from '../lib/indicators.ts';
+import { MIN_COMPARABLE_SHARE } from '../lib/twin.ts';
+
+const AXES = [
+  { id: 'demografia', titulo: 'Demografia' },
+  { id: 'territorio', titulo: 'Território' },
+  { id: 'economia', titulo: 'Economia' },
+  { id: 'infraestrutura', titulo: 'Infraestrutura' },
+];
+const total = formatInteger(municipios.length);
+const share = String(Math.round(MIN_COMPARABLE_SHARE * 100));
+const count = String(INDICATORS.length);
+---
+
+<Sheet
+  title="Município gêmeo: Brasil em Mapas"
+  description="Encontre os municípios brasileiros mais parecidos com o seu, comparando população, território, economia e infraestrutura com dados do IBGE."
+  back={{ href: '/', label: 'Brasil' }}
+>
+  <main class="atlas-page">
+    <div class="atlas">
+      <div class="atlas-main">
+        <div>
+          <h1 class="atlas-title">Município gêmeo</h1>
+          <p class="atlas-lede">
+            Os municípios mais parecidos com o seu, entre os {total} do cadastro do IBGE. A semelhança é medida em {count} indicadores, em
+            quatro eixos.
+          </p>
+        </div>
+
+        <noscript>
+          <p class="callout">
+            O gêmeo calcula no seu navegador e precisa de JavaScript. Cada página de município mostra os números, sem o cálculo.
+          </p>
+        </noscript>
+
+        <form class="twin-form" data-twin-form hidden>
+          <div class="position">
+            <label for="twin-input">Município</label>
+            <input id="twin-input" type="search" autocomplete="off" spellcheck="false" placeholder="Nome da sua cidade" aria-describedby="twin-status" />
+            <ul class="position-results" data-twin-results></ul>
+          </div>
+          <fieldset class="twin-axes">
+            <legend>Eixos da comparação</legend>
+            {
+              AXES.map((axis) => (
+                <label class="twin-axis">
+                  <input type="checkbox" name="eixo" value={axis.id} checked />
+                  <span>{axis.titulo}</span>
+                </label>
+              ))
+            }
+          </fieldset>
+        </form>
+        <p class="position-status" id="twin-status" role="status" data-twin-status></p>
+      </div>
+
+      <aside class="margin margin--sticky margin--beside-results" aria-label="Notas">
+        <div class="rose"><CompassRose /></div>
+        <div class="notes">
+          <h2>Como funciona</h2>
+          <p>Fonte: IBGE (Censo 2022 e PIB dos Municípios 2021). O ano de cada indicador está em <a href="/sobre/">Sobre os dados</a>.</p>
+          <p>
+            Cada indicador é reescalado para que população e densidade, que variam em milhares de vezes, não decidam sozinhas. Cada eixo
+            ligado pesa igual, qualquer que seja o número de indicadores dele.
+          </p>
+          <p>
+            Só entram na comparação os indicadores que existem nos dois municípios. Se menos de {share}% dos indicadores ligados puderem
+            ser comparados, o par é deixado de fora. Dado ausente nunca vira zero.
+          </p>
+        </div>
+      </aside>
+
+      <section class="twin-out" data-twin-out aria-live="polite" hidden>
+        <h2 data-twin-title></h2>
+        <p class="source" data-twin-note></p>
+        <ol class="twin-list" data-twin-list></ol>
+      </section>
+    </div>
+  </main>
+</Sheet>
+
+<script>
+  import '../scripts/twin.ts';
+</script>
