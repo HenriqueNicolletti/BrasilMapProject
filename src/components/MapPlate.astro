@@ -26,19 +26,22 @@ interface Props {
   items: PlateItem[];
   /** Code of the state capital, marked as a seat (ring and dot) and lettered with its name. */
   capital?: string | undefined;
+  /** A framed inset for islands far offshore; their shapes are among `items`, already drawn inside `frame`. */
+  inset?: { frame: { x: number; y: number; width: number; height: number }; title: string; note: string } | undefined;
 }
 
-const { viewBox, label, items, capital } = Astro.props;
+const { viewBox, label, items, capital, inset } = Astro.props;
 const linked = items.some((item) => item.href !== undefined);
 const shapeClass = (step: number | null) => `shape ${step === null ? 's-none' : `s${String(step)}`}`;
 
 // The name goes beside the seat, on the side with more room, so it never runs off the plate.
 const seat = items.find((item) => item.codigo === capital);
-const [minX = 0, , width = 0] = viewBox.split(/\s+/).map(Number);
+const [minX = 0, minY = 0, width = 0, height = 0] = viewBox.split(/\s+/).map(Number);
 const nameOnLeft = seat !== undefined && seat.cx > minX + width * 0.62;
+const insetTopRight = inset !== undefined && inset.frame.y < minY + height / 2 && inset.frame.x > minX + width / 2;
 ---
 
-<figure class="plate" data-plate>
+<figure class:list={['plate', { 'plate--inset-top-right': insetTopRight }]} data-plate>
   <svg viewBox={viewBox} role={linked ? 'group' : 'img'} aria-label={label}>
     <defs>
       <pattern id="sem-dado" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
@@ -46,6 +49,11 @@ const nameOnLeft = seat !== undefined && seat.cx > minX + width * 0.62;
         <line x1="0" y1="0" x2="0" y2="6" style="stroke: var(--scale-no-data-hatch); stroke-width: 1.2"></line>
       </pattern>
     </defs>
+    {
+      inset !== undefined && (
+        <rect class="inset-frame" x={inset.frame.x} y={inset.frame.y} width={inset.frame.width} height={inset.frame.height} aria-hidden="true"></rect>
+      )
+    }
     <g data-shapes>
       {
         items.map((item) =>
@@ -61,6 +69,14 @@ const nameOnLeft = seat !== undefined && seat.cx > minX + width * 0.62;
     </g>
     <!-- Outline of the active shape, drawn on top without moving any node (moving a focused link would blur it). -->
     <path class="shape-highlight" data-highlight d="" aria-hidden="true"></path>
+    {
+      inset !== undefined && (
+        <g class="inset-caption" aria-hidden="true">
+          <text class="inset-title" x={inset.frame.x + 10} y={inset.frame.y + 16}>{inset.title}</text>
+          <text class="inset-note" x={inset.frame.x + 10} y={inset.frame.y + 32}>{inset.note}</text>
+        </g>
+      )
+    }
     {
       seat !== undefined && (
         <g class="capital-mark" aria-hidden="true" data-capital={seat.codigo}>

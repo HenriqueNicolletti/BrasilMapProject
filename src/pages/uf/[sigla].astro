@@ -8,7 +8,7 @@ import Sheet from '../../layouts/Sheet.astro';
 import { classifyItems } from '../../lib/choropleth.ts';
 import { matrix, meta, municipioRow, municipios, ufMunicipiosMesh, ufs } from '../../lib/data.ts';
 import { formatIndicatorValue, formatInteger } from '../../lib/format.ts';
-import { projectFeatures, topologyFeatures } from '../../lib/geo.ts';
+import { insetLayout, projectFeatures, projectInto, splitOutlying, topologyFeatures } from '../../lib/geo.ts';
 import { itemHref } from '../../lib/map-data.ts';
 import { INDICATORS } from '../../lib/indicators.ts';
 import type { MapData, MapIndicator } from '../../lib/map-data.ts';
@@ -32,13 +32,25 @@ const itens = doEstado.map((municipio) => ({
 const capitalNome = doEstado.find((municipio) => municipio.codigo === uf.capital)?.nome;
 if (capitalNome === undefined) throw new Error(`The capital of ${uf.sigla} (${uf.capital}) is not among its municipalities`);
 
-const projected = projectFeatures(topologyFeatures(ufMunicipiosMesh(uf.sigla)), {
-  width: 800,
-  height: 800,
-  padding: 10,
-  kind: 'estado',
-  fit: 'content',
-});
+// Islands far offshore (Fernando de Noronha; Vitória's Trindade and Martim Vaz) go in an inset, so the
+// state fills the plate instead of shrinking to make room for a thousand kilometres of sea.
+const { main, outlying } = splitOutlying(topologyFeatures(ufMunicipiosMesh(uf.sigla)));
+const projectedMain = projectFeatures(main, { width: 800, height: 800, padding: 10, kind: 'estado', fit: 'content' });
+const insetPlacement = outlying.length > 0 ? insetLayout(main, outlying, projectedMain.viewBox, { width: 210, height: 130 }, 16) : null;
+const projected = {
+  viewBox: insetPlacement?.viewBox ?? projectedMain.viewBox,
+  items: [...projectedMain.items, ...(insetPlacement ? projectInto(outlying, insetPlacement.frame, { top: 44, side: 10 }) : [])],
+};
+const insetTitle = outlying
+  .map((part) => {
+    const nome = doEstado.find((municipio) => municipio.codigo === part.codigo)?.nome ?? part.codigo;
+    // A whole municipality offshore goes by its name; the offshore part of a mainland one is named by what
+    // is drawn (the mesh has Trindade but not Martim Vaz, so Vitória's reads in the singular).
+    if (!main.some((item) => item.codigo === part.codigo)) return nome;
+    return part.feature.geometry.type === 'MultiPolygon' ? `Ilhas oceânicas de ${nome}` : `Ilha oceânica de ${nome}`;
+  })
+  .join(', ');
+const inset = insetPlacement ? { frame: insetPlacement.frame, title: insetTitle, note: 'fora de posição e de escala' } : undefined;
 
 const indicadores: MapIndicator[] = INDICATORS.map((def, coluna) => {
   const indicador: MapIndicator = { id: def.id, rotulo: def.rotulo, unidade: def.unidade, ano: def.ano, fonte: def.fonte, coluna };
@@ -119,9 +131,10 @@ const semFormaNote =
         </div>
         <MapPlate
           viewBox={projected.viewBox}
-          label={`Mapa dos municípios de ${uf.nome}, com a capital, ${capitalNome}, marcada. Os valores de cada município estão na tabela abaixo.`}
+          label={`Mapa dos municípios de ${uf.nome}, com a capital, ${capitalNome}, marcada.${inset ? ` ${insetTitle} num quadro à parte, ${inset.note}.` : ''} Os valores de cada município estão na tabela abaixo.`}
           items={plateItems}
           capital={uf.capital}
+          inset={inset}
         />
         <a class="skip" href="#tabela">Ver os mesmos dados em tabela</a>
       </div>

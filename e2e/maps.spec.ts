@@ -112,6 +112,42 @@ test('the state capital is marked on the map, keyed in the legend and named in t
   await expect(page.locator('[data-rows] tr[data-codigo="3106200"] .capital-tag')).toHaveText('capital');
 });
 
+test('islands far offshore are drawn in an inset, and still take the colour and the tooltip', async ({ page }) => {
+  await page.goto('/uf/pe/');
+  await expect(page.locator('.inset-title')).toHaveText('Fernando de Noronha');
+  await expect(page.locator('.inset-note')).toHaveText('fora de posição e de escala');
+  await page.locator('[data-shapes] path[data-codigo="2605459"]').dispatchEvent('pointerover');
+  await expect(page.locator('[data-tip]')).toContainText('Fernando de Noronha');
+
+  // Vitória has two shapes, its mainland and, in the inset, its ocean island; both follow the indicator.
+  await page.goto('/uf/es/');
+  await expect(page.locator('.inset-title')).toHaveText('Ilha oceânica de Vitória');
+  const vitoria = page.locator('[data-shapes] path[data-codigo="3205309"]');
+  await expect(vitoria).toHaveCount(2);
+  await page.locator('[data-indicator-select]').selectOption('renda_pc');
+  await expect(page.locator('[data-value-head]')).toHaveText('Renda domiciliar per capita');
+  const [mainland, island] = await vitoria.evaluateAll((paths) => paths.map((path) => path.getAttribute('class')));
+  expect(island).toBe(mainland);
+
+  // A state without far islands has no inset.
+  await page.goto('/uf/mg/');
+  await expect(page.locator('.inset-frame')).toHaveCount(0);
+});
+
+test('a municipality page frames its state without the far islands, unless it is on them', async ({ page }) => {
+  const ratio = async () =>
+    page.locator('.locator svg').evaluate((svg) => {
+      const [, , w = 0, h = 0] = (svg.getAttribute('viewBox') ?? '').split(' ').map(Number);
+      return w / h;
+    });
+  await page.goto('/municipio/recife-pe/');
+  const recife = await ratio();
+  await page.goto('/municipio/fernando-de-noronha-pe/');
+  const noronha = await ratio();
+  expect(recife).toBeGreaterThan(2.3); // Pernambuco alone is long and low
+  expect(noronha).toBeLessThan(recife); // with Noronha, the frame reaches 350 km out to sea
+});
+
 test('a municipality with no data reads "sem dado" and is explained, never shown as 0', async ({ page }) => {
   await page.goto('/uf/mt/');
   const row = page.locator('[data-rows] tr[data-codigo="5101837"]');

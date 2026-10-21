@@ -42,9 +42,12 @@ function init(data: MapData): void {
   });
 
   const highlight = must(plate, '[data-highlight]', SVGPathElement);
-  const shapes = new Map<string, SVGPathElement>();
+  // A place can have more than one shape: Vitória's mainland and, in the inset, its ocean islands. The
+  // first is the main one, the one the highlight and the tooltip follow; all of them take the colour.
+  const shapes = new Map<string, SVGPathElement[]>();
   shapesGroup.querySelectorAll<SVGPathElement>('path[data-codigo]').forEach((path) => {
-    shapes.set(path.dataset['codigo'] ?? '', path);
+    const codigo = path.dataset['codigo'] ?? '';
+    shapes.set(codigo, [...(shapes.get(codigo) ?? []), path]);
   });
 
   const soundings = new Map<string, SVGTextElement>();
@@ -99,10 +102,10 @@ function init(data: MapData): void {
     values = new Map(model.items.map((item) => [item.codigo, item.value]));
 
     for (const item of model.items) {
-      const path = shapes.get(item.codigo);
-      if (!path) continue;
-      path.setAttribute('class', `shape ${item.step === null ? 's-none' : `s${String(item.step)}`}`);
-      path.closest('a')?.setAttribute('aria-label', `${item.nome}: ${item.valueText}`);
+      for (const path of shapes.get(item.codigo) ?? []) {
+        path.setAttribute('class', `shape ${item.step === null ? 's-none' : `s${String(item.step)}`}`);
+        path.closest('a')?.setAttribute('aria-label', `${item.nome}: ${item.valueText}`);
+      }
       const sounding = soundings.get(item.codigo);
       if (sounding) sounding.textContent = item.compactText;
     }
@@ -119,7 +122,7 @@ function init(data: MapData): void {
   const seat = plate.querySelector<SVGGElement>('[data-capital]');
 
   function activate(codigo: string): void {
-    const path = shapes.get(codigo);
+    const path = shapes.get(codigo)?.[0];
     if (!path || active === codigo) return;
     deactivate();
     active = codigo;

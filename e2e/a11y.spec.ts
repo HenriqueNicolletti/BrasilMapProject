@@ -4,6 +4,7 @@ import { expect, test } from '@playwright/test';
 const PAGES = [
   '/',
   '/uf/mg/',
+  '/uf/pe/',
   '/municipio/sorriso-mt/',
   '/municipio/boa-esperanca-do-norte-mt/',
   '/gemeo/?m=sorriso-mt',

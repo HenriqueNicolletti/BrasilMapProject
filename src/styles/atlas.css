@@ -235,6 +235,35 @@
   text-anchor: end;
 }
 
+/* Islands far offshore, set in a ruled inset beside the map, as a printed atlas does. */
+.inset-frame {
+  fill: var(--color-sea);
+  stroke: var(--color-line-strong);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.inset-caption {
+  pointer-events: none;
+}
+
+.inset-title {
+  font-family: var(--font-label);
+  font-size: var(--text-map-label);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  dominant-baseline: central;
+  fill: var(--color-text);
+}
+
+.inset-note {
+  font-family: var(--font-serif);
+  font-size: var(--text-map-sounding);
+  font-style: italic;
+  dominant-baseline: central;
+  fill: var(--color-text-muted);
+}
+
 /* The same seat, as the key in the legend notes. */
 .capital-key {
   display: flex;
@@ -499,6 +528,7 @@ th[aria-sort='descending'] .sort::after {
 
   /* At phone width the abbreviations would print at about 6px; the table carries the names. */
   .capital-name,
+  .inset-caption,
   .shape-label,
   .shape-sounding {
     display: none;
@@ -828,6 +858,12 @@ th[aria-sort='descending'] .sort::after {
     top: 0;
     right: 0;
     width: var(--rose-size-small);
+  }
+
+  /* An inset in the top-right corner (Fernando de Noronha) takes the compass's place: on a wide state the
+     other corners hold land, and the inset is chart furniture enough for that sheet. */
+  .plate--inset-top-right .rose-corner {
+    display: none;
   }
 }
 
