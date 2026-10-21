@@ -1,5 +1,6 @@
+import type { Feature } from 'geojson';
 import { describe, expect, it } from 'vitest';
-import { featureCentroid, projectFeatures, projectWithin, topologyFeatures } from './geo.ts';
+import { featureCentroid, mainPart, projectFeatures, projectWithin, topologyFeatures } from './geo.ts';
 
 // Two 1°x1° squares around lon -50..-49 and -48..-47, lat -15..-14, in quantised TopoJSON form, wound clockwise as d3-geo expects.
 function topology() {
@@ -29,6 +30,20 @@ describe('topologyFeatures', () => {
   });
 });
 
+// A 1°x1° mainland square and an island a tenth of its size 20° east, like Vitória (ES) and the
+// Trindade islands: enough to drag an area-weighted centre far out to sea.
+const withFarIsland: Feature = {
+  type: 'Feature',
+  properties: { codarea: '3205309' },
+  geometry: {
+    type: 'MultiPolygon',
+    coordinates: [
+      [[[-50, -15], [-50, -14], [-49, -14], [-49, -15], [-50, -15]]],
+      [[[-30, -15], [-30, -14.7], [-29.7, -14.7], [-29.7, -15], [-30, -15]]],
+    ],
+  },
+};
+
 describe('featureCentroid', () => {
   it('returns [longitude, latitude], in that order', () => {
     const [first] = topologyFeatures(topology());
@@ -36,6 +51,27 @@ describe('featureCentroid', () => {
     const [lon, lat] = featureCentroid(first.feature);
     expect(lon).toBeCloseTo(-49.5, 1);
     expect(lat).toBeCloseTo(-14.5, 1);
+  });
+
+  it('places a multi-part shape on its largest part, not between the parts', () => {
+    const [lon, lat] = featureCentroid(withFarIsland);
+    expect(lon).toBeCloseTo(-49.5, 1);
+    expect(lat).toBeCloseTo(-14.5, 1);
+  });
+});
+
+describe('mainPart', () => {
+  it('keeps the largest polygon of a multi-part shape', () => {
+    const main = mainPart(withFarIsland);
+    expect(main.geometry.type).toBe('Polygon');
+    expect(JSON.stringify(main.geometry)).toContain('[-50,-15]');
+    expect(JSON.stringify(main.geometry)).not.toContain('-29.7');
+  });
+
+  it('returns a single polygon as it is', () => {
+    const [first] = topologyFeatures(topology());
+    if (!first) throw new Error('fixture has no features');
+    expect(mainPart(first.feature)).toBe(first.feature);
   });
 });
 

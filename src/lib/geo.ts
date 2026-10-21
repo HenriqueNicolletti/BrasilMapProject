@@ -1,5 +1,5 @@
-import { geoCentroid, geoConicEqualArea, geoMercator, geoPath, type GeoProjection } from 'd3-geo';
-import type { Feature, FeatureCollection } from 'geojson';
+import { geoArea, geoCentroid, geoConicEqualArea, geoMercator, geoPath, type GeoProjection } from 'd3-geo';
+import type { Feature, FeatureCollection, Polygon } from 'geojson';
 import { feature as topoFeature } from 'topojson-client';
 import type { GeometryCollection, Topology } from 'topojson-specification';
 
@@ -21,9 +21,29 @@ export function topologyFeatures(topology: Topology): CodedFeature[] {
   });
 }
 
-/** `[longitude, latitude]`, the GeoJSON order. */
+/**
+ * The largest polygon of a multi-part shape. Its centre is where the place is: Vitória (ES) includes the
+ * Trindade islands, over 1,000 km offshore, and the centre of all its parts falls in the open sea.
+ */
+export function mainPart(item: Feature): Feature {
+  const { geometry } = item;
+  if (geometry.type !== 'MultiPolygon') return item;
+  let largest: Polygon | null = null;
+  let largestArea = -1;
+  for (const coordinates of geometry.coordinates) {
+    const polygon: Polygon = { type: 'Polygon', coordinates };
+    const area = geoArea(polygon);
+    if (area > largestArea) {
+      largest = polygon;
+      largestArea = area;
+    }
+  }
+  return largest === null ? item : { ...item, geometry: largest };
+}
+
+/** `[longitude, latitude]`, the GeoJSON order, of the shape's largest part. */
 export function featureCentroid(item: Feature): [number, number] {
-  const [lon, lat] = geoCentroid(item);
+  const [lon, lat] = geoCentroid(mainPart(item));
   return [lon, lat];
 }
 
@@ -81,7 +101,7 @@ export function projectFeatures(features: readonly CodedFeature[], options: Proj
 
   const path = geoPath(projection).digits(1);
   const items = features.map(({ codigo, feature }) => {
-    const [cx, cy] = path.centroid(feature);
+    const [cx, cy] = path.centroid(mainPart(feature));
     return { codigo, d: path(feature) ?? '', cx: round1(cx), cy: round1(cy), area: Math.round(path.area(feature)) };
   });
   return { viewBox, items };
@@ -117,7 +137,7 @@ export function projectWithin(context: CodedFeature, features: readonly CodedFea
 
   const path = geoPath(projection).digits(1);
   const items = features.map(({ codigo, feature }) => {
-    const [cx, cy] = path.centroid(feature);
+    const [cx, cy] = path.centroid(mainPart(feature));
     return { codigo, d: path(feature) ?? '', cx: round1(cx), cy: round1(cy), area: Math.round(path.area(feature)) };
   });
   const w = Math.ceil(x1 - x0 + 2 * padding);
