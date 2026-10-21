@@ -480,5 +480,18 @@ Gêmeos com todos os eixos, antes (13) e depois (14), conferidos à mão:
 
 As capitais e as cidades médias quase não mudam. Onde a renda separa municípios parecidos no resto do perfil, o resultado fica mais plausível: Gramado (renda per capita de R$ 2.623) deixa de ter como gêmeas Seropédica (R$ 1.181) e Cesário Lange (R$ 1.256), parecidas no PIB per capita e no resto do perfil, mas com menos da metade da renda; os novos gêmeos ficam entre R$ 2.258 e R$ 2.417.
 
+## Capital no mapa do estado (2026-10-21)
+
+### D13.1 De onde vem a capital
+A API de localidades do IBGE não diz qual município é a capital. A fonte é o próprio IBGE: o nível municipal (`N6`) da PNAD Contínua (tabela 4093) cobre exatamente as 27 capitais, uma por estado (`/api/v3/agregados/4093/localidades/N6`). O script de dados baixa essa lista, valida com Zod e passa por `capitalsByUf` (`src/lib/capitais.ts`), que falha se faltar ou sobrar capital em algum estado, ou se o código não estiver no cadastro. O código da capital entra em `ufs.json` (`capital`). Nenhuma lista escrita à mão.
+
+### D13.2 Como a capital aparece
+- **No mapa:** a convenção cartográfica de sede, um anel com ponto em tinta preta sobre um halo da cor do mar, com o nome letrado ao lado na fonte de nomes do mapa (o nome vai para o lado com mais espaço, para não sair da carta). É um fato fixo da carta, então usa tinta, não o magenta do que está ativo: o hover continua sendo o contorno magenta e não se confunde com a capital. O símbolo fica por cima do hover e não captura o mouse; quando a própria capital está ativa, só o anel fica magenta, porque numa capital pequena (Belo Horizonte, Vitória) o símbolo cobre quase todo o contorno do hover.
+- **No celular:** o nome some junto com o resto do letreiro (abaixo de 40rem ficaria com cerca de 6 px); o símbolo fica, desenhado maior.
+- **Alternativas sem o mapa:** chave na legenda ("Capital do estado: Belo Horizonte"), a palavra "capital" ao lado do nome na tabela (que se mantém quando a tabela é redesenhada ao trocar o indicador) e o nome da capital no rótulo do mapa para leitor de tela.
+
+### D13.3 Centro de um município em várias partes: a maior parte
+Ao conferir os 27 mapas, o símbolo de Vitória caiu no mar, a 119 km da costa: o município inclui as ilhas de Trindade e Martim Vaz, e o centro de todas as partes juntas fica no oceano. `mainPart` (`src/lib/geo.ts`) passa a usar, para o centro, só a maior parte de um município em várias partes. Isso corrige também o alvo no mapa da página do município e a "Posição aproximada" (Vitória: de um ponto no mar para 20,28° S, 40,30° O). Quinze municípios mudam mais de 1 km; depois de Vitória, os maiores deslocamentos são de 17 km (Senador José Porfírio, PA) e 15 km (Barra do Bugres, MT).
+
 ### D3.7 (atualização): malha municipal fica em `qualidade=intermediaria`
 Decidido em 2026-10-20, depois de ver Minas Gerais nas duas qualidades lado a lado. A `minima` corta a geometria de MG de 897 KB para 211 KB e quase não muda o desenho no tamanho da página, mas fica angulosa com zoom, o que pesa no mapa de `/brasil/`. Fica a `intermediaria`. Custo aceito: `/uf/mg/` e outros estados grandes ficam abaixo de 90 em desempenho no Lighthouse do celular (85 em MG, D10.4). Isso está fora dos critérios do projeto, que pedem 90+ só na home e na página de município, e as duas passam.
