@@ -1,6 +1,6 @@
 import type { Feature } from 'geojson';
 import { describe, expect, it } from 'vitest';
-import { featureCentroid, mainPart, projectFeatures, projectWithin, topologyFeatures } from './geo.ts';
+import { featureCentroid, insetLayout, mainPart, projectFeatures, projectInto, projectWithin, splitOutlying, topologyFeatures } from './geo.ts';
 
 // Two 1°x1° squares around lon -50..-49 and -48..-47, lat -15..-14, in quantised TopoJSON form, wound clockwise as d3-geo expects.
 function topology() {
@@ -57,6 +57,101 @@ describe('featureCentroid', () => {
     const [lon, lat] = featureCentroid(withFarIsland);
     expect(lon).toBeCloseTo(-49.5, 1);
     expect(lat).toBeCloseTo(-14.5, 1);
+  });
+});
+
+describe('splitOutlying', () => {
+  const square = (lon: number, lat: number, size = 1): number[][][] => [
+    [[lon, lat], [lon, lat + size], [lon + size, lat + size], [lon + size, lat], [lon, lat]],
+  ];
+  const coded = (codigo: string, ...polygons: number[][][][]): { codigo: string; feature: Feature } => ({
+    codigo,
+    feature: {
+      type: 'Feature',
+      properties: { codarea: codigo },
+      geometry: polygons.length === 1 ? { type: 'Polygon', coordinates: polygons[0] ?? [] } : { type: 'MultiPolygon', coordinates: polygons },
+    },
+  });
+
+  it('keeps neighbours and near islands with the landmass, and sets a far island apart', () => {
+    const a = coded('2600001', square(-40, -9));
+    const b = coded('2600002', square(-39, -9));
+    const coastal = coded('2600003', square(-37.6, -9, 0.1)); // about 40 km off the coast
+    const noronha = coded('2605459', square(-32.5, -3.9, 0.1)); // about 600 km away
+    const { main, outlying } = splitOutlying([a, b, coastal, noronha]);
+    expect(main.map((item) => item.codigo)).toEqual(['2600001', '2600002', '2600003']);
+    expect(outlying.map((item) => item.codigo)).toEqual(['2605459']);
+    expect(main[0]).toBe(a); // untouched features come back as they are
+  });
+
+  it('splits a municipality with a far island into its mainland and its island, under the same code', () => {
+    const vitoria = coded('3205309', square(-40.4, -20.4, 0.2), square(-29.4, -20.6, 0.1));
+    const neighbour = coded('3205002', square(-40.6, -20.4, 0.2));
+    const { main, outlying } = splitOutlying([vitoria, neighbour]);
+    expect(main.map((item) => item.codigo)).toEqual(['3205309', '3205002']);
+    expect(outlying.map((item) => item.codigo)).toEqual(['3205309']);
+    expect(main[0]?.feature.geometry.type).toBe('Polygon');
+    expect(JSON.stringify(main[0]?.feature.geometry)).not.toContain('-29.4');
+    expect(JSON.stringify(outlying[0]?.feature.geometry)).toContain('-29.4');
+  });
+
+  it('returns everything as main when nothing is far', () => {
+    const { main, outlying } = splitOutlying([coded('3550308', square(-46.7, -23.6, 0.3))]);
+    expect(main).toHaveLength(1);
+    expect(outlying).toEqual([]);
+  });
+});
+
+describe('insetLayout', () => {
+  const at = (codigo: string, lon: number, lat: number) => ({
+    codigo,
+    feature: { type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [lon, lat] } } as Feature,
+  });
+
+  it('puts the frame above a wide map, at the end toward the islands, and grows the viewBox upward', () => {
+    const layout = insetLayout([at('1', -37, -8.4)], [at('2', -32.4, -3.9)], '0 0 800 300', { width: 200, height: 120 }, 16);
+    expect(layout.frame).toEqual({ x: 598, y: -136, width: 200, height: 120 });
+    expect(layout.viewBox).toBe('0 -138 800 438');
+  });
+
+  it('puts the frame beside a tall map, toward the islands, and grows the viewBox sideways', () => {
+    const layout = insetLayout([at('1', -40.6, -19.6)], [at('2', -29.3, -20.5)], '0 0 400 800', { width: 200, height: 120 }, 16);
+    expect(layout.frame).toEqual({ x: 416, y: 678, width: 200, height: 120 });
+    expect(layout.viewBox).toBe('0 0 618 800');
+  });
+});
+
+describe('projectInto', () => {
+  it('keeps every coordinate inside the box, below the top padding', () => {
+    const [first] = topologyFeatures(topology());
+    if (!first) throw new Error('fixture has no features');
+    const [item] = projectInto([first], { x: 500, y: -200, width: 200, height: 120 }, { top: 40, side: 8 });
+    const numbers = (item?.d.match(/-?\d+(\.\d+)?/g) ?? []).map(Number);
+    const xs = numbers.filter((_, i) => i % 2 === 0);
+    const ys = numbers.filter((_, i) => i % 2 === 1);
+    expect(Math.min(...xs)).toBeGreaterThanOrEqual(508 - 0.1);
+    expect(Math.max(...xs)).toBeLessThanOrEqual(692 + 0.1);
+    expect(Math.min(...ys)).toBeGreaterThanOrEqual(-160 - 0.1);
+    expect(Math.max(...ys)).toBeLessThanOrEqual(-88 + 0.1);
+  });
+});
+
+describe('projectWithin with a far-off island in the context', () => {
+  const mainland = [[[-41, -10], [-41, -7], [-35, -7], [-35, -10], [-41, -10]]];
+  const island = [[[-32.5, -3.9], [-32.5, -3.8], [-32.4, -3.8], [-32.4, -3.9], [-32.5, -3.9]]];
+  const state = { codigo: '26', feature: { type: 'Feature', properties: {}, geometry: { type: 'MultiPolygon', coordinates: [mainland, island] } } as Feature };
+  const town = { codigo: '2611606', feature: { type: 'Feature', properties: {}, geometry: { type: 'Polygon', coordinates: [[[-35.2, -8.2], [-35.2, -8], [-35, -8], [-35, -8.2], [-35.2, -8.2]]] } } as Feature };
+  const onIsland = { codigo: '2605459', feature: { type: 'Feature', properties: {}, geometry: { type: 'Polygon', coordinates: island } } as Feature };
+
+  it('fits the mainland, so the state fills the frame', () => {
+    const [, , w = 0, h = 0] = projectWithin(state, [town], { width: 600, padding: 0, kind: 'estado' }).viewBox.split(' ').map(Number);
+    expect(w / h).toBeCloseTo(2, 0); // 6° by 3°, not stretched to the island 2.5° further east
+  });
+
+  it('still shows the island when the place itself is there', () => {
+    const [, , w = 0, h = 0] = projectWithin(state, [onIsland], { width: 600, padding: 0, kind: 'estado' }).viewBox.split(' ').map(Number);
+    expect(w / h).toBeGreaterThan(1.3);
+    expect(w / h).not.toBeCloseTo(2, 0);
   });
 });
 
