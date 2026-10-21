@@ -12,12 +12,14 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { ZodType } from 'zod';
 import { extractSeries } from '../src/lib/agregados.ts';
+import { capitalsByUf } from '../src/lib/capitais.ts';
 import { buildDataset } from '../src/lib/dataset.ts';
 import { featureCentroid, topologyFeatures } from '../src/lib/geo.ts';
 import { INDICATORS, type RawKey } from '../src/lib/indicators.ts';
 import { encodeMatrix } from '../src/lib/matrix.ts';
 import { fetchTextWithRetry } from '../src/lib/retry.ts';
 import {
+  agregadoLocalidadesSchema,
   agregadoResponseSchema,
   localidadeMunicipioSchema,
   malhaSchema,
@@ -218,6 +220,10 @@ async function main(): Promise<void> {
   console.log('Writing src/data/...');
   await mkdir(OUT_DIR, { recursive: true });
 
+  // The PNAD Contínua's municipal level (table 4093) is the IBGE's own list of the 27 state capitals.
+  const capitaisLista = await getJson('capitais', `${API}/v3/agregados/4093/localidades/N6`, agregadoLocalidadesSchema);
+  const capitais = capitalsByUf(capitaisLista, estados.map((uf) => String(uf.id)), knownCodes);
+
   const ufResponse = responses.get('populacaoUf');
   if (!ufResponse) throw new Error('No state-level response');
   const ufSeries = (variavel: string, kind: SidraKind) => extractSeries(ufResponse, { variavel, ano: '2022', kind });
@@ -231,7 +237,9 @@ async function main(): Promise<void> {
       const area = ufArea.get(codigo);
       const densidade = ufDens.get(codigo);
       if (populacao == null || area == null || densidade == null) throw new Error(`State ${uf.sigla} has no population, area or density from IBGE`);
-      return { codigo, sigla: uf.sigla, nome: uf.nome, regiao: uf.regiao.nome, populacao, area, densidade };
+      const capital = capitais.get(codigo);
+      if (capital === undefined) throw new Error(`State ${uf.sigla} has no capital`);
+      return { codigo, sigla: uf.sigla, nome: uf.nome, regiao: uf.regiao.nome, populacao, area, densidade, capital };
     })
     .sort((a, b) => a.codigo.localeCompare(b.codigo));
 

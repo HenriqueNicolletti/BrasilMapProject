@@ -57,6 +57,15 @@ export const agregadoResponseSchema = z.array(
   }),
 );
 
+/** The localities of one territorial level of a table, e.g. `/agregados/4093/localidades/N6`. */
+export const agregadoLocalidadesSchema = z.array(
+  z.object({
+    id: z.string().regex(/^\d{7}$/),
+    nome: z.string(),
+    nivel: z.object({ id: z.literal('N6'), nome: z.string() }),
+  }),
+);
+
 export const nomesResponseSchema = z.array(
   z.object({
     localidade: z.string(),
@@ -113,6 +122,8 @@ export const ufProcessadaSchema = z.object({
   populacao: z.number().int().positive(),
   area: z.number().positive(),
   densidade: z.number().positive(),
+  /** Code of the state capital (IBGE, see `capitalsByUf`). */
+  capital: codigoMunicipio,
 });
 
 export const indicadoresMetaSchema = z.object({

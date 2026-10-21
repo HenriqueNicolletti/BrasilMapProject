@@ -92,8 +92,14 @@ describe('municipioSchema coordinates', () => {
 
 describe('ufProcessadaSchema state figures', () => {
   it('carries population, area and density from the state-level table', () => {
-    const parsed = ufProcessadaSchema.parse({ codigo: '35', sigla: 'SP', nome: 'São Paulo', regiao: 'Sudeste', populacao: 44411238, area: 248219.485, densidade: 178.92 });
+    const parsed = ufProcessadaSchema.parse({ codigo: '35', sigla: 'SP', nome: 'São Paulo', regiao: 'Sudeste', populacao: 44411238, area: 248219.485, densidade: 178.92, capital: '3550308' });
     expect(parsed.populacao).toBe(44411238);
+  });
+
+  it('requires the capital as a 7-digit municipality code', () => {
+    const base = { codigo: '35', sigla: 'SP', nome: 'São Paulo', regiao: 'Sudeste', populacao: 44411238, area: 248219.485, densidade: 178.92 };
+    expect(() => ufProcessadaSchema.parse(base)).toThrow();
+    expect(() => ufProcessadaSchema.parse({ ...base, capital: 3550308 })).toThrow();
   });
 
   it('requires them: a state with no figures should fail the pipeline, not render as 0', () => {

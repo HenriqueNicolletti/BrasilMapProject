@@ -147,4 +147,15 @@ describe('ufs.json state figures', () => {
   it('sums to the 2022 Census population of Brazil', () => {
     expect(ufs.reduce((total, uf) => total + uf.populacao, 0)).toBe(203080756);
   });
+
+  it('names one capital per state, a municipality of that state with a shape on the map', () => {
+    expect(new Set(ufs.map((uf) => uf.capital)).size).toBe(27);
+    for (const uf of ufs) {
+      const capital = municipios.find((m) => m.codigo === uf.capital);
+      expect(capital?.ufCodigo, uf.sigla).toBe(uf.codigo);
+      expect(capital?.lat, uf.sigla).not.toBeNull();
+    }
+    const byUf = Object.fromEntries(ufs.map((uf) => [uf.sigla, municipios.find((m) => m.codigo === uf.capital)?.nome]));
+    expect(byUf).toMatchObject({ MG: 'Belo Horizonte', SP: 'São Paulo', DF: 'Brasília', TO: 'Palmas', SC: 'Florianópolis' });
+  });
 });
