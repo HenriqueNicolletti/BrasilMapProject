@@ -91,6 +91,27 @@ test('hovering a shape highlights its table row and shows the value', async ({ p
   await expect(page.locator('tr.is-active')).toContainText('Belo Horizonte');
 });
 
+test('the state capital is marked on the map, keyed in the legend and named in the table', async ({ page }) => {
+  await page.goto('/uf/mg/');
+  const seat = page.locator('[data-plate] [data-capital="3106200"]');
+  await expect(seat).toContainText('Belo Horizonte');
+  await expect(page.locator('.capital-key')).toHaveText('Capital do estado: Belo Horizonte');
+  await expect(page.locator('[data-rows] tr', { has: page.locator('.capital-tag') })).toHaveCount(1);
+  await expect(page.locator('[data-rows] tr[data-codigo="3106200"] .capital-tag')).toHaveText('capital');
+
+  // Its own highlight is not the hover: the seat turns magenta only while the capital itself is active.
+  await expect(seat).not.toHaveClass(/is-active/);
+  await page.locator('path[data-codigo="3170206"]').dispatchEvent('pointerover');
+  await expect(seat).not.toHaveClass(/is-active/);
+  await page.locator('path[data-codigo="3106200"]').dispatchEvent('pointerover');
+  await expect(seat).toHaveClass(/is-active/);
+
+  // The table is redrawn when the indicator changes; the mark stays.
+  await page.locator('[data-indicator-select]').selectOption('renda_pc');
+  await expect(page.locator('[data-value-head]')).toHaveText('Renda domiciliar per capita');
+  await expect(page.locator('[data-rows] tr[data-codigo="3106200"] .capital-tag')).toHaveText('capital');
+});
+
 test('a municipality with no data reads "sem dado" and is explained, never shown as 0', async ({ page }) => {
   await page.goto('/uf/mt/');
   const row = page.locator('[data-rows] tr[data-codigo="5101837"]');

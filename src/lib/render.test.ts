@@ -44,6 +44,12 @@ describe('rowsHtml', () => {
     expect(html).toContain('<a href="/uf/sp/">São Paulo</a>');
   });
 
+  it('marks the state capital after its name, outside the link', () => {
+    const html = rowsHtml([{ codigo: '3106200', nome: 'Belo Horizonte', valueText: '1', href: '/municipio/belo-horizonte-mg/', capital: true }]);
+    expect(html).toContain('<a href="/municipio/belo-horizonte-mg/">Belo Horizonte</a> <span class="capital-tag">capital</span></th>');
+    expect(rowsHtml([{ codigo: '3170206', nome: 'Uberlândia', valueText: '1' }])).not.toContain('capital-tag');
+  });
+
   it('escapes names so a place name can never inject markup', () => {
     expect(rowsHtml([{ codigo: '1', nome: '<script>', valueText: '1' }])).toContain('&lt;script&gt;');
   });

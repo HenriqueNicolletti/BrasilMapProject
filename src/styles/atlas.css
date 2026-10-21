@@ -190,6 +190,72 @@
   pointer-events: none;
 }
 
+/* The state capital as a chart seat: black-ink ring and dot on a sea halo, lettered in the label hand.
+   It is a fixed fact of the chart, so it is printed in ink, never in the magenta of what is active, and it
+   stays on top of the hover overprint without catching the pointer. */
+.capital-mark {
+  pointer-events: none;
+}
+
+.capital-halo {
+  fill: var(--color-sea);
+}
+
+.capital-ring {
+  fill: var(--color-sea);
+  stroke: var(--color-text);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.capital-dot {
+  fill: var(--color-text);
+}
+
+/* When the capital itself is the active place, its ring takes the overprint ink of what is active. */
+.capital-mark.is-active .capital-ring {
+  stroke: var(--color-accent);
+  stroke-width: 2.5;
+}
+
+.capital-name {
+  font-family: var(--font-label);
+  font-size: var(--text-map-label);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  dominant-baseline: central;
+  fill: var(--color-text);
+  stroke: var(--color-sea);
+  stroke-width: var(--map-halo);
+  paint-order: stroke;
+  stroke-linejoin: round;
+}
+
+.capital-name--left {
+  text-anchor: end;
+}
+
+/* The same seat, as the key in the legend notes. */
+.capital-key {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.capital-key svg {
+  flex: none;
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+/* "capital" after the name in the table: a note in the label hand, not a link. */
+.capital-tag {
+  font-family: var(--font-label);
+  font-weight: 400;
+  letter-spacing: var(--tracking-label);
+  color: var(--color-text-muted);
+}
+
 .tip {
   position: absolute;
   z-index: 2;
@@ -424,7 +490,15 @@ th[aria-sort='descending'] .sort::after {
     width: var(--rose-size-small);
   }
 
+  /* The seat stays, drawn larger so it still reads at phone scale; its name goes with the other lettering. */
+  .capital-mark circle {
+    transform: scale(1.8);
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+
   /* At phone width the abbreviations would print at about 6px; the table carries the names. */
+  .capital-name,
   .shape-label,
   .shape-sounding {
     display: none;

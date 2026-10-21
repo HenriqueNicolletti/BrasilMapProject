@@ -27,7 +27,10 @@ const itens = doEstado.map((municipio) => ({
   nome: municipio.nome,
   slug: municipio.slug,
   row: municipioRow.get(municipio.codigo),
+  ...(municipio.codigo === uf.capital ? { capital: true } : {}),
 }));
+const capitalNome = doEstado.find((municipio) => municipio.codigo === uf.capital)?.nome;
+if (capitalNome === undefined) throw new Error(`The capital of ${uf.sigla} (${uf.capital}) is not among its municipalities`);
 
 const projected = projectFeatures(topologyFeatures(ufMunicipiosMesh(uf.sigla)), {
   width: 800,
@@ -75,6 +78,7 @@ const rows = rowsHtml(
       nome: item.nome,
       valueText: item.valueText,
       href: itemHref(data, itens[index] as (typeof itens)[number]),
+      capital: item.codigo === uf.capital,
     }))
     .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')),
 );
@@ -115,8 +119,9 @@ const semFormaNote =
         </div>
         <MapPlate
           viewBox={projected.viewBox}
-          label={`Mapa dos municípios de ${uf.nome}. Os valores de cada município estão na tabela abaixo.`}
+          label={`Mapa dos municípios de ${uf.nome}, com a capital, ${capitalNome}, marcada. Os valores de cada município estão na tabela abaixo.`}
           items={plateItems}
+          capital={uf.capital}
         />
         <a class="skip" href="#tabela">Ver os mesmos dados em tabela</a>
       </div>
@@ -125,6 +130,7 @@ const semFormaNote =
         defaultId={padrao.id}
         legend={legendHtml(model.legend, model.hasNoData)}
         legendTitle="Legenda"
+        capital={capitalNome}
         source={`Fonte: IBGE, ${padrao.fonte}. Ano de referência: ${padrao.ano}.`}
         scopeNote={`Classes calculadas entre os municípios de ${uf.nome}: as cores não são comparáveis entre estados. Cada faixa inclui o valor inicial e exclui o final, exceto a última.${semFormaNote}`}
       />

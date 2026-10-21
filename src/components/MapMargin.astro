@@ -12,9 +12,11 @@ interface Props {
   legendTitle: string;
   source: string;
   scopeNote: string;
+  /** Name of the state capital, keyed under the legend with the same seat symbol as the map. */
+  capital?: string | undefined;
 }
 
-const { indicators, defaultId, legend, legendTitle, source, scopeNote } = Astro.props;
+const { indicators, defaultId, legend, legendTitle, source, scopeNote, capital } = Astro.props;
 const hasLead = Astro.slots.has('lead');
 ---
 
@@ -34,6 +36,18 @@ const hasLead = Astro.slots.has('lead');
   <div class="notes">
     <h2>{legendTitle}</h2>
     <ul class="legend" data-legend set:html={legend}></ul>
+    {
+      capital !== undefined && (
+        <p class="capital-key">
+          <svg viewBox="-12 -12 24 24" aria-hidden="true">
+            <circle class="capital-halo" r="9"></circle>
+            <circle class="capital-ring" r="6.5"></circle>
+            <circle class="capital-dot" r="2.4"></circle>
+          </svg>
+          <span>Capital do estado: {capital}</span>
+        </p>
+      )
+    }
     <p class="source" data-source>{source}</p>
     <p class="source">{scopeNote}</p>
     {

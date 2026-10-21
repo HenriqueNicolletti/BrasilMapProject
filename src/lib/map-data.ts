@@ -22,6 +22,8 @@ export interface MapItemRef {
   row?: number | undefined;
   /** Page slug, when the item has its own page under `MapData.hrefBase`. */
   slug?: string | undefined;
+  /** The state capital, on a state map. */
+  capital?: boolean | undefined;
 }
 
 /** What the page hands to the browser script, as JSON in `#choropleth-data`. */

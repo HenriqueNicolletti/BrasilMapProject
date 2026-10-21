@@ -24,11 +24,18 @@ interface Props {
   viewBox: string;
   label: string;
   items: PlateItem[];
+  /** Code of the state capital, marked as a seat (ring and dot) and lettered with its name. */
+  capital?: string | undefined;
 }
 
-const { viewBox, label, items } = Astro.props;
+const { viewBox, label, items, capital } = Astro.props;
 const linked = items.some((item) => item.href !== undefined);
 const shapeClass = (step: number | null) => `shape ${step === null ? 's-none' : `s${String(step)}`}`;
+
+// The name goes beside the seat, on the side with more room, so it never runs off the plate.
+const seat = items.find((item) => item.codigo === capital);
+const [minX = 0, , width = 0] = viewBox.split(/\s+/).map(Number);
+const nameOnLeft = seat !== undefined && seat.cx > minX + width * 0.62;
 ---
 
 <figure class="plate" data-plate>
@@ -54,6 +61,18 @@ const shapeClass = (step: number | null) => `shape ${step === null ? 's-none' : 
     </g>
     <!-- Outline of the active shape, drawn on top without moving any node (moving a focused link would blur it). -->
     <path class="shape-highlight" data-highlight d="" aria-hidden="true"></path>
+    {
+      seat !== undefined && (
+        <g class="capital-mark" aria-hidden="true" data-capital={seat.codigo}>
+          <circle class="capital-halo" cx={seat.cx} cy={seat.cy} r="9"></circle>
+          <circle class="capital-ring" cx={seat.cx} cy={seat.cy} r="6.5"></circle>
+          <circle class="capital-dot" cx={seat.cx} cy={seat.cy} r="2.4"></circle>
+          <text class:list={['capital-name', { 'capital-name--left': nameOnLeft }]} x={seat.cx + (nameOnLeft ? -14 : 14)} y={seat.cy}>
+            {seat.nome}
+          </text>
+        </g>
+      )
+    }
     <g aria-hidden="true">
       {
         items

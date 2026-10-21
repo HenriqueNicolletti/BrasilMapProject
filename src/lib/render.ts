@@ -21,12 +21,15 @@ export interface TableRow {
   nome: string;
   valueText: string;
   href?: string | undefined;
+  /** The state capital, marked after its name as on the map. */
+  capital?: boolean | undefined;
 }
 
 export function rowsHtml(rows: readonly TableRow[]): string {
   return rows
     .map((row) => {
-      const name = row.href === undefined ? escapeHtml(row.nome) : `<a href="${escapeHtml(row.href)}">${escapeHtml(row.nome)}</a>`;
+      const link = row.href === undefined ? escapeHtml(row.nome) : `<a href="${escapeHtml(row.href)}">${escapeHtml(row.nome)}</a>`;
+      const name = row.capital === true ? `${link} <span class="capital-tag">capital</span>` : link;
       return `<tr data-codigo="${escapeHtml(row.codigo)}"><th scope="row">${name}</th><td class="num sounding">${escapeHtml(row.valueText)}</td></tr>`;
     })
     .join('');

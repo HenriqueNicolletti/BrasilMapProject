@@ -71,6 +71,7 @@ function init(data: MapData): void {
       nome: item.nome,
       valueText: texts.get(item.codigo) ?? '',
       value: values.get(item.codigo) ?? null,
+      capital: item.capital,
       ...(itemHref(data, item) === undefined ? {} : { href: itemHref(data, item) as string }),
     }));
     const direction = sort.dir === 'asc' ? 1 : -1;
@@ -114,6 +115,8 @@ function init(data: MapData): void {
 
   // ---- Tooltip and highlight, shared by the shapes and the table rows ----
   let active: string | null = null;
+  // The capital's seat covers much of a small capital's shape, so it takes the magenta too while active.
+  const seat = plate.querySelector<SVGGElement>('[data-capital]');
 
   function activate(codigo: string): void {
     const path = shapes.get(codigo);
@@ -123,6 +126,7 @@ function init(data: MapData): void {
     // Outline on top via an overlay: moving the shape itself would blur a focused link.
     highlight.setAttribute('d', path.getAttribute('d') ?? '');
     highlight.classList.add('is-on');
+    if (seat?.dataset['capital'] === codigo) seat.classList.add('is-active');
     tbody.querySelector(`tr[data-codigo="${codigo}"]`)?.classList.add('is-active');
 
     const name = data.itens.find((item) => item.codigo === codigo)?.nome ?? '';
@@ -146,6 +150,7 @@ function init(data: MapData): void {
   function deactivate(): void {
     if (active === null) return;
     highlight.classList.remove('is-on');
+    seat?.classList.remove('is-active');
     tbody.querySelector(`tr[data-codigo="${active}"]`)?.classList.remove('is-active');
     tip.hidden = true;
     active = null;
